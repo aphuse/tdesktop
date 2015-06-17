@@ -66,7 +66,7 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 "lng_close" = "关闭";
 "lng_connecting" = "连接中..";
 "lng_reconnecting" = "重新连接 {count:now|in # s|in # s}..";
-"lng_reconnecting_try_now" = "立即试用";
+"lng_reconnecting_try_now" = "立即使用";
 
 "lng_status_service_notifications" = "服务通知";
 "lng_status_bot" = "机器人";
@@ -80,8 +80,8 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 "lng_status_lastseen_now" = "刚刚在线";
 "lng_status_lastseen_minutes" = "最后登录： {count:_not_used_|# minute|# 分钟}之前";
 "lng_status_lastseen_hours" = "最后登录： {count:_not_used_|# hour|# 小时}之前";
-"lng_status_lastseen_today" = "最后登录：今天 {time} 点";
-"lng_status_lastseen_yesterday" = "最后登录：昨天 {time} 点";
+"lng_status_lastseen_today" = "最后登录：今天 {time} ";
+"lng_status_lastseen_yesterday" = "最后登录：昨天 {time} ";
 "lng_status_lastseen_date" = "最后登录：{date}";
 "lng_status_lastseen_date_time" = "最后登录：{date} 的 {time}";
 "lng_status_online" = "在线";
@@ -359,13 +359,13 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 "lng_profile_loading" = "载入中..";
 "lng_profile_shared_media" = "共享媒体";
 "lng_profile_no_media" = "此次交谈中没有多媒体。";
-"lng_profile_photos" = "{count:_not_used_|# photo|# photos} »";
-"lng_profile_photos_header" = "照片概览";
-"lng_profile_videos" = "{count:_not_used_|# video file|# video files} »";
+"lng_profile_photos" = "{count:_not_used_|# 张图片|# 张图片} »";
+"lng_profile_photos_header" = "图片概览";
+"lng_profile_videos" = "{count:_not_used_|# 个视频|# 个视频} »";
 "lng_profile_videos_header" = "视频文件概览";
-"lng_profile_files" = "{count:_not_used_|# file|# files} »";
+"lng_profile_files" = "{count:_not_used_|# 个文件|# 个文件} »";
 "lng_profile_files_header" = "文件概览";
-"lng_profile_audios" = "{count:_not_used_|# 语音信息|# 语音信息} »";
+"lng_profile_audios" = "{count:_not_used_|# 条语音信息|# 条语音信息} »";
 "lng_profile_audios_header" = "语音信息概览";
 "lng_profile_show_all_types" = "显示所有类型";
 "lng_profile_copy_phone" = "复制手机号";
@@ -379,9 +379,9 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 "lng_failed_add_participant" = "无法添加用户。请稍后再试。";
 
 "lng_sure_delete_contact" = "确定从联系人列表删除 {contact}？";
-"lng_sure_delete_history" = "Are you sure, you want to delete all message history with {contact}?\n\nThis action cannot be undone.";
+"lng_sure_delete_history" = "确定删除 {contact} 相关的所有历史记录？\n\n此操作不可恢复";
 
-"lng_sure_delete_and_exit" = "Are you sure, you want to delete all message history and leave «{group}»?\n\nThis action cannot be undone.";
+"lng_sure_delete_and_exit" = "确定退出 «{group}» 并删除所有相关历史记录？\n\n此操作不可恢复";
 
 "lng_message_empty" = "（空）";
 
@@ -515,9 +515,9 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 "lng_context_copy_text" = "复制文本";
 "lng_context_to_msg" = "转至留言";
 "lng_context_reply_msg" = "回复";
-"lng_context_forward_msg" = "转发邮件";
-"lng_context_delete_msg" = "删除留言";
-"lng_context_select_msg" = "选择信息";
+"lng_context_forward_msg" = "转发消息";
+"lng_context_delete_msg" = "删除消息";
+"lng_context_select_msg" = "选择消息";
 "lng_context_cancel_upload" = "取消上传";
 "lng_context_copy_selected" = "复制选定的文本";
 "lng_context_forward_selected" = "转发所选";
@@ -599,7 +599,7 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 
 "lng_new_version_wrap" = "Telegram Desktop 已更新到版本 {version}\n\n{changes}\n\n完整的更新日志：\n{link}";
 "lng_new_version_minor" = "- 错误修复和其他小的改进";
-"lng_new_version_text" = "这个新版本为聊天机器人添加新的API。如果你是个设计员，你可以使用@botfather来创建你自己的聊天机器人如@quiz_bot或者@hot_or_bot。\n\n更多的在{blog_link}";
+"lng_new_version_text" = "这个新版本为聊天机器人添加新的API。如果你是个设计师，你可以使用@botfather来创建你自己的聊天机器人如@quiz_bot或者@hot_or_bot。\n\n更多内容在{blog_link}";
 
 "lng_menu_insert_unicode" = "插入Unicode控制字符";
 
