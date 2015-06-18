@@ -2411,7 +2411,7 @@ void MentionsInner::paintEvent(QPaintEvent *e) {
 
 	int32 atwidth = st::mentionFont->m.width('@'), hashwidth = st::mentionFont->m.width('#');
 	int32 availwidth = width() - 2 * st::mentionPadding.left() - st::mentionPhotoSize - 2 * st::mentionPadding.right();
-	int32 htagleft = st::btnAttachPhoto.width + st::taMsgField.textMrg.left() - st::dlgShadow, htagwidth = width() - st::mentionPadding.right() - htagleft;
+	int32 htagleft = st::btnAttachPhoto.width + st::taMsgField.textMrg.left() - st::dlgShadow, htagwidth = width() - st::mentionPadding.right() - htagleft - st::mentionScroll.width;
 
 	int32 from = qFloor(e->rect().top() / st::mentionHeight), to = qFloor(e->rect().bottom() / st::mentionHeight) + 1;
 	int32 last = _rows->isEmpty() ? (_hrows->isEmpty() ? _crows->size() : _hrows->size()) : _rows->size();
@@ -2483,10 +2483,10 @@ void MentionsInner::paintEvent(QPaintEvent *e) {
 			int32 botStatus = _parent->chat() ? _parent->chat()->botStatus : -1;
 			if (hasUsername || botStatus == 0 || botStatus == 2) {
 				toHighlight += '@' + user->username;
-				if (botStatus == 0 || botStatus == 2) {
-					user->photo->load();
-					p.drawPixmap(st::mentionPadding.left(), i * st::mentionHeight + st::mentionPadding.top(), user->photo->pixRounded(st::mentionPhotoSize));
-				}
+			}
+			if (_parent->chat() || botStatus == 0 || botStatus == 2) {
+				user->photo->load();
+				p.drawPixmap(st::mentionPadding.left(), i * st::mentionHeight + st::mentionPadding.top(), user->photo->pixRounded(st::mentionPhotoSize));
 			}
 
 			int32 addleft = 0, widthleft = htagwidth;

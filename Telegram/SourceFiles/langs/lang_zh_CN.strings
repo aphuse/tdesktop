@@ -464,6 +464,7 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 "lng_from_you" = "你";
 "lng_bot_description" = "这个机器人能做什么?";
 
+"lng_bot_start" = "启用";
 "lng_bot_choose_group" = "选择群组";
 "lng_bot_no_groups" = "你没有群组";
 "lng_bot_groups_not_found" = "没找到群组";
@@ -599,7 +600,7 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 
 "lng_new_version_wrap" = "Telegram Desktop 已更新到版本 {version}\n\n{changes}\n\n完整的更新日志：\n{link}";
 "lng_new_version_minor" = "- 错误修复和其他小的改进";
-"lng_new_version_text" = "这个新版本为聊天机器人添加新的API。如果你是个设计师，你可以使用@botfather来创建你自己的聊天机器人如@quiz_bot或者@hot_or_bot。\n\n更多内容在{blog_link}";
+"lng_new_version_text" = "这个新版本为聊天机器人了添加新的API，对每个人都是开放的。如果你是个设计师，你可以创建用于游戏或者服务的机器人。在 {blog_link} 查看更多信息。";
 
 "lng_menu_insert_unicode" = "插入Unicode控制字符";
 
