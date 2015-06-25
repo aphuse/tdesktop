@@ -81,6 +81,8 @@ public:
 
 	void updateBotInfo(bool recount = true);
 
+	bool wasSelectedText() const;
+
 	~HistoryList();
 	
 public slots:
@@ -115,7 +117,6 @@ private:
 	HistoryItem *prevItem(HistoryItem *item);
 	HistoryItem *nextItem(HistoryItem *item);
 	void updateDragSelection(HistoryItem *dragSelFrom, HistoryItem *dragSelTo, bool dragSelecting, bool force = false);
-	void applyDragSelection();
 
 	History *hist;
 
@@ -133,6 +134,9 @@ private:
 	Qt::CursorShape _cursor;
 	typedef QMap<HistoryItem*, uint32> SelectedItems;
 	SelectedItems _selected;
+	void applyDragSelection();
+	void applyDragSelection(SelectedItems *toItems) const;
+
 	enum DragAction {
 		NoDrag        = 0x00,
 		PrepareDrag   = 0x01,
@@ -154,6 +158,7 @@ private:
 
 	HistoryItem *_dragSelFrom, *_dragSelTo;
 	bool _dragSelecting;
+	bool _wasSelectedText; // was some text selected in current drag action
 
 	bool _touchScroll, _touchSelect, _touchInProgress;
 	QPoint _touchStart, _touchPrevPos, _touchPos;
@@ -214,6 +219,7 @@ public:
 
 	bool updateMarkup(HistoryItem *last);
 	bool hasMarkup() const;
+	bool forceReply() const;
 
 	bool hoverStep(float64 ms);
 	void resizeToWidth(int32 width, int32 maxOuterHeight);
@@ -237,7 +243,7 @@ private:
 
 	MsgId _wasForMsgId;
 	int32 _height, _maxOuterHeight;
-	bool _maximizeSize, _singleUse;
+	bool _maximizeSize, _singleUse, _forceReply;
 	QTimer _cmdTipTimer;
 
 	QPoint _lastMousePos;
@@ -430,7 +436,8 @@ public:
 
 	MsgId replyToId() const;
 	void updateReplyTo(bool force = false);
-	void cancelReply();
+	bool lastForceReplyReplied(MsgId replyTo = -1) const;
+	void cancelReply(bool lastKeyboardUsed = false);
 	void updateForwarding(bool force = false);
 	void cancelForwarding(); // called by MainWidget
 
@@ -457,6 +464,8 @@ public:
 
 	bool eventFilter(QObject *obj, QEvent *e);
 	void updateBotKeyboard();
+
+	DragState getDragState(const QMimeData *d);
 
 	~HistoryWidget();
 
@@ -504,6 +513,7 @@ public slots:
 	void onDocumentDrop(QDropEvent *e);
 
 	void onKbToggle(bool manual = true);
+	void onCmdStart();
 
 	void onPhotoReady();
 	void onSendConfirmed();
@@ -512,6 +522,7 @@ public slots:
 	void showPeer(const PeerId &peer, MsgId msgId = 0, bool force = false, bool leaveActive = false);
 	void clearLoadingAround();
 	void activate();
+	void onMentionHashtagOrBotCommandInsert(QString str);
 	void onTextChange();
 
 	void onStickerSend(DocumentData *sticker);
@@ -589,7 +600,6 @@ private:
 	void setFieldText(const QString &text);
 
 	QStringList getMediasFromMime(const QMimeData *d);
-	DragState getDragState(const QMimeData *d);
 
 	void updateDragAreas();
 
@@ -613,8 +623,12 @@ private:
 
 	MentionsDropdown _attachMention;
 
+	bool isBotStart() const;
+	bool updateCmdStartShown();
+
 	FlatButton _send, _botStart;
-	IconedButton _attachDocument, _attachPhoto, _attachEmoji, _kbShow, _kbHide;
+	IconedButton _attachDocument, _attachPhoto, _attachEmoji, _kbShow, _kbHide, _cmdStart;
+	bool _cmdStartShown;
 	MessageField _field;
 	Animation _recordAnim, _recordingAnim;
 	bool _recording, _inRecord, _inField, _inReply;
