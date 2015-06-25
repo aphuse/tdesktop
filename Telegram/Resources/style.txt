@@ -993,15 +993,21 @@ btnAttachEmoji: iconedButton(btnAttachDocument) {
 	width: 33px;
 }
 btnBotKbShow: iconedButton(btnAttachEmoji) {
-	icon: sprite(375px, 74px, 21px, 16px);
-	iconPos: point(6px, 16px);
-	downIcon: sprite(375px, 74px, 21px, 16px);
-	downIconPos: point(6px, 16px);
+	icon: sprite(375px, 74px, 21px, 21px);
+	iconPos: point(6px, 12px);
+	downIcon: sprite(375px, 74px, 21px, 21px);
+	downIconPos: point(6px, 12px);
+}
+btnBotCmdStart: iconedButton(btnAttachEmoji) {
+	icon: sprite(354px, 74px, 21px, 21px);
+	iconPos: point(6px, 12px);
+	downIcon: sprite(354px, 74px, 21px, 21px);
+	downIconPos: point(6px, 12px);
 }
 btnBotKbHide: iconedButton(btnAttachEmoji) {
-	icon: sprite(352px, 74px, 23px, 14px);
+	icon: sprite(373px, 95px, 23px, 14px);
 	iconPos: point(5px, 17px);
-	downIcon: sprite(352px, 74px, 23px, 14px);
+	downIcon: sprite(373px, 95px, 23px, 14px);
 	downIconPos: point(5px, 17px);
 }
 btnRecordAudio: sprite(363px, 366px, 16px, 24px);
@@ -1573,67 +1579,67 @@ rbEmoji: flatCheckbox {
 	imagePos: point(8px, 12px);
 }
 rbEmojiRecent: flatCheckbox(rbEmoji) {
-	imageRect: emojiRecent;
+	imageRect: emojiRecentOver;
 	chkImageRect: emojiRecentActive;
 	overImageRect: emojiRecentOver;
 	chkOverImageRect: emojiRecentActive;
-	disImageRect: emojiRecent;
+	disImageRect: emojiRecentOver;
 	chkDisImageRect: emojiRecentActive;
 }
 rbEmojiPeople: flatCheckbox(rbEmoji) {
-	imageRect: emojiPeople;
+	imageRect: emojiPeopleOver;
 	chkImageRect: emojiPeopleActive;
 	overImageRect: emojiPeopleOver;
 	chkOverImageRect: emojiPeopleActive;
-	disImageRect: emojiPeople;
+	disImageRect: emojiPeopleOver;
 	chkDisImageRect: emojiPeopleActive;
 }
 rbEmojiNature: flatCheckbox(rbEmoji) {
-	imageRect: emojiNature;
+	imageRect: emojiNatureOver;
 	chkImageRect: emojiNatureActive;
 	overImageRect: emojiNatureOver;
 	chkOverImageRect: emojiNatureActive;
-	disImageRect: emojiNature;
+	disImageRect: emojiNatureOver;
 	chkDisImageRect: emojiNatureActive;
 }
 rbEmojiFood: flatCheckbox(rbEmoji) {
-	imageRect: emojiFood;
+	imageRect: emojiFoodOver;
 	chkImageRect: emojiFoodActive;
 	overImageRect: emojiFoodOver;
 	chkOverImageRect: emojiFoodActive;
-	disImageRect: emojiFood;
+	disImageRect: emojiFoodOver;
 	chkDisImageRect: emojiFoodActive;
 }
 rbEmojiCelebration: flatCheckbox(rbEmoji) {
-	imageRect: emojiCelebration;
+	imageRect: emojiCelebrationOver;
 	chkImageRect: emojiCelebrationActive;
 	overImageRect: emojiCelebrationOver;
 	chkOverImageRect: emojiCelebrationActive;
-	disImageRect: emojiCelebration;
+	disImageRect: emojiCelebrationOver;
 	chkDisImageRect: emojiCelebrationActive;
 }
 rbEmojiActivity: flatCheckbox(rbEmoji) {
-	imageRect: emojiActivity;
+	imageRect: emojiActivityOver;
 	chkImageRect: emojiActivityActive;
 	overImageRect: emojiActivityOver;
 	chkOverImageRect: emojiActivityActive;
-	disImageRect: emojiActivity;
+	disImageRect: emojiActivityOver;
 	chkDisImageRect: emojiActivityActive;
 }
 rbEmojiTravel: flatCheckbox(rbEmoji) {
-	imageRect: emojiTravel;
+	imageRect: emojiTravelOver;
 	chkImageRect: emojiTravelActive;
 	overImageRect: emojiTravelOver;
 	chkOverImageRect: emojiTravelActive;
-	disImageRect: emojiTravel;
+	disImageRect: emojiTravelOver;
 	chkDisImageRect: emojiTravelActive;
 }
 rbEmojiObjects: flatCheckbox(rbEmoji) {
-	imageRect: emojiObjects;
+	imageRect: emojiObjectsOver;
 	chkImageRect: emojiObjectsActive;
 	overImageRect: emojiObjectsOver;
 	chkOverImageRect: emojiObjectsActive;
-	disImageRect: emojiObjects;
+	disImageRect: emojiObjectsOver;
 	chkDisImageRect: emojiObjectsActive;
 }
 emojiPanPadding: 10px;
@@ -1931,8 +1937,6 @@ mentionFg: #777;
 mentionFgOver: #707070;
 mentionFgActive: #0080c0;
 mentionFgOverActive: #0077b3;
-botCommandFont: font(fsize semibold);
-botDescFont: font(fsize italic);
 
 sessionsHeight: 440px;
 sessionHeight: 70px;

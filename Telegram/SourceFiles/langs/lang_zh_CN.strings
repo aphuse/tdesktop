@@ -508,6 +508,7 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 "lng_context_open_audio" = "打开音频";
 "lng_context_save_audio" = "音频另存为..";
 "lng_context_pack_info" = "贴图包信息";
+"lng_context_pack_add" = "添加贴图";
 "lng_context_open_file" = "打开文件";
 "lng_context_save_file" = "文件另存为..";
 "lng_context_forward_file" = "转发文件";
