@@ -694,6 +694,10 @@ void MainWidget::dialogsActivate() {
 	dialogs.activate();
 }
 
+DragState MainWidget::getDragState(const QMimeData *mime) {
+	return history.getDragState(mime);
+}
+
 bool MainWidget::leaveChatFailed(PeerData *peer, const RPCError &error) {
 	if (error.type().startsWith(qsl("FLOOD_WAIT_"))) return false;
 
@@ -1567,13 +1571,13 @@ void MainWidget::confirmShareContact(bool ctrlShiftEnter, const QString &phone, 
 }
 
 void MainWidget::confirmSendImage(const ReadyLocalMedia &img) {
+	bool lastKeyboardUsed = history.lastForceReplyReplied(img.replyTo);
 	history.confirmSendImage(img);
-	history.cancelReply();
+	history.cancelReply(lastKeyboardUsed);
 }
 
 void MainWidget::confirmSendImageUncompressed(bool ctrlShiftEnter, MsgId replyTo) {
 	history.uploadConfirmImageUncompressed(ctrlShiftEnter, replyTo);
-	history.cancelReply();
 }
 
 void MainWidget::cancelSendImage() {

@@ -244,7 +244,7 @@ void UserData::setBotInfo(const MTPBotInfo &info) {
 		botInfo->commands.reserve(v.size());
 		for (int32 i = 0, l = v.size(); i < l; ++i) {
 			if (v.at(i).type() == mtpc_botCommand) {
-				botInfo->commands.push_back(BotCommand(qs(v.at(i).c_botCommand().vcommand), qs(v.at(i).c_botCommand().vparams), qs(v.at(i).c_botCommand().vdescription)));
+				botInfo->commands.push_back(BotCommand(qs(v.at(i).c_botCommand().vcommand), qs(v.at(i).c_botCommand().vdescription)));
 			}
 		}
 
@@ -258,6 +258,8 @@ void UserData::nameUpdated() {
 }
 
 void UserData::madeAction() {
+	if (botInfo || isServiceUser(id)) return;
+
 	int32 t = unixtime();
 	if (onlineTill <= 0 && -onlineTill < t) {
 		onlineTill = -t - SetOnlineAfterActivity;
@@ -500,6 +502,21 @@ void AudioCancelLink::onClick(Qt::MouseButton button) const {
 	if ((!data->user && !data->date) || button != Qt::LeftButton) return;
 
 	data->cancel();
+}
+
+bool StickerData::setInstalled() const {
+	switch (set.type()) {
+	case mtpc_inputStickerSetID: {
+		return (cStickerSets().constFind(set.c_inputStickerSetID().vid.v) != cStickerSets().cend());
+	} break;
+	case mtpc_inputStickerSetShortName: {
+		QString name = qs(set.c_inputStickerSetShortName().vshort_name).toLower();
+		for (StickerSets::const_iterator i = cStickerSets().cbegin(), e = cStickerSets().cend(); i != e; ++i) {
+			if (i->shortName.toLower() == name) return true;
+		}
+	} break;
+	}
+	return false;
 }
 
 AudioData::AudioData(const AudioId &id, const uint64 &access, int32 user, int32 date, const QString &mime, int32 duration, int32 dc, int32 size) :
