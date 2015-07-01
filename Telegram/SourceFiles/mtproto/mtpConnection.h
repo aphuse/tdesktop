@@ -43,7 +43,12 @@ enum {
 	MTPDreplyKeyboardMarkup_flag_single_use = (1 << 1),
 	MTPDreplyKeyboardMarkup_flag_personal = (1 << 2),
 	MTPDreplyKeyboardMarkup_flag_FORCE_REPLY = (1 << 30), // client side flag for forceReply
-	MTPDreplyKeyboardMarkup_flag_ZERO = (1 << 31) // client side flag for zeroMarkup
+	MTPDreplyKeyboardMarkup_flag_ZERO = (1 << 31), // client side flag for zeroMarkup
+
+	MTPDstickerSet_flag_installed = (1 << 0),
+	MTPDstickerSet_flag_disabled = (1 << 1),
+	MTPDstickerSet_flag_official = (1 << 2),
+	MTPDstickerSet_flag_NOT_LOADED = (1 << 31), // client side flag for not yet loaded set
 };
 
 static const MTPReplyMarkup MTPnullMarkup = MTP_replyKeyboardMarkup(MTP_int(0), MTP_vector<MTPKeyboardButtonRow>(0));
@@ -141,7 +146,7 @@ public:
 	virtual void sendData(mtpBuffer &buffer) = 0; // has size + 3, buffer[0] = len, buffer[1] = packetnum, buffer[last] = crc32
 	virtual void disconnectFromServer() = 0;
 	virtual void connectToServer(const QString &addr, int32 port, int32 flags) = 0;
-	virtual bool isConnected() = 0;
+	virtual bool isConnected() const = 0;
 	virtual bool usingHttpWait() {
 		return false;
 	}
@@ -209,7 +214,7 @@ public:
 	void sendData(mtpBuffer &buffer);
 	void disconnectFromServer();
 	void connectToServer(const QString &addr, int32 port, int32 flags);
-	bool isConnected();
+	bool isConnected() const;
 	bool usingHttpWait();
 	bool needHttpWait();
 
@@ -256,7 +261,7 @@ private:
 	Requests requests;
 
 	QString _addr;
-	int32 _port, _tcpTimeout;
+	int32 _port, _tcpTimeout, _flags;
 	QTimer tcpTimeoutTimer;
 
 };
@@ -271,7 +276,7 @@ public:
 	void sendData(mtpBuffer &buffer);
 	void disconnectFromServer();
 	void connectToServer(const QString &addr, int32 port, int32 flags);
-	bool isConnected();
+	bool isConnected() const;
 
 	int32 debugState() const;
 
@@ -281,9 +286,28 @@ public slots:
 
 	void socketError(QAbstractSocket::SocketError e);
 
+	void onSocketConnected();
+	void onSocketDisconnected();
+
+	void onTcpTimeoutTimer();
+
 protected:
 
 	void socketPacket(mtpPrime *packet, uint32 packetSize);
+
+private:
+
+	enum Status {
+		WaitingTcp = 0,
+		UsingTcp,
+		FinishedWork
+	};
+	Status status;
+	MTPint128 tcpNonce;
+
+	QString _addr;
+	int32 _port, _tcpTimeout, _flags;
+	QTimer tcpTimeoutTimer;
 
 };
 
@@ -297,7 +321,7 @@ public:
 	void sendData(mtpBuffer &buffer);
 	void disconnectFromServer();
 	void connectToServer(const QString &addr, int32 port, int32 flags);
-	bool isConnected();
+	bool isConnected() const;
 	bool usingHttpWait();
 	bool needHttpWait();
 
@@ -310,6 +334,15 @@ public slots:
 	void requestFinished(QNetworkReply *reply);
 
 private:
+
+	enum Status {
+		WaitingHttp = 0,
+		UsingHttp,
+		FinishedWork
+	};
+	Status status;
+	MTPint128 httpNonce;
+	int32 _flags;
 
 	QNetworkAccessManager manager;
 	QUrl address;
@@ -414,7 +447,7 @@ private:
 	void clearMessages();
 
 	bool setState(int32 state, int32 ifState = MTProtoConnection::UpdateAlways);
-	mutable QReadWriteLock stateMutex;
+	mutable QReadWriteLock stateConnMutex;
 	int32 _state;
 
 	bool _needSessionReset;

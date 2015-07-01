@@ -1410,6 +1410,9 @@ DialogsWidget::DialogsWidget(MainWidget *parent) : QWidget(parent)
 	connect(&_newGroup, SIGNAL(clicked()), this, SLOT(onNewGroup()));
 	connect(&_cancelSearch, SIGNAL(clicked()), this, SLOT(onCancelSearch()));
 
+	_chooseByDragTimer.setSingleShot(true);
+	connect(&_chooseByDragTimer, SIGNAL(timeout()), this, SLOT(onChooseByDrag()));
+
 	setAcceptDrops(true);
 
 	_searchTimer.setSingleShot(true);
@@ -1628,6 +1631,10 @@ void DialogsWidget::onNeedSearchMessages() {
 	}
 }
 
+void DialogsWidget::onChooseByDrag() {
+	list.choosePeer();
+}
+
 void DialogsWidget::searchMessages(const QString &query) {
 	if (_filter.text() != query) {
 		_filter.setText(query);
@@ -1769,20 +1776,28 @@ void DialogsWidget::dragEnterEvent(QDragEnterEvent *e) {
 	if (App::main()->selectingPeer()) return;
 
 	_dragInScroll = false;
-	_dragForward = cWideMode() && e->mimeData()->hasFormat(qsl("application/x-td-forward-selected"));
+	_dragForward = e->mimeData()->hasFormat(qsl("application/x-td-forward-selected"));
+	if (!_dragForward) _dragForward = e->mimeData()->hasFormat(qsl("application/x-td-forward-pressed-link"));
+	if (!_dragForward) _dragForward = e->mimeData()->hasFormat(qsl("application/x-td-forward-pressed"));
+	if (_dragForward && !cWideMode()) _dragForward = false;
 	if (_dragForward) {
 		e->setDropAction(Qt::CopyAction);
 		e->accept();
 		updateDragInScroll(scroll.geometry().contains(e->pos()));
-	} else if (false && App::main() && App::main()->getDragState(e->mimeData()) != DragStateNone) {
+	} else if (App::main() && App::main()->getDragState(e->mimeData()) != DragStateNone) {
 		e->setDropAction(Qt::CopyAction);
 		e->accept();
 	}
+	_chooseByDragTimer.stop();
 }
 
 void DialogsWidget::dragMoveEvent(QDragMoveEvent *e) {
 	if (scroll.geometry().contains(e->pos())) {
-		if (_dragForward) updateDragInScroll(true);
+		if (_dragForward) {
+			updateDragInScroll(true);
+		} else {
+			_chooseByDragTimer.start(ChoosePeerByDragTimeout);
+		}
 		PeerData *p = list.updateFromParentDrag(mapToGlobal(e->pos()));
 		if (p) {
 			e->setDropAction(Qt::CopyAction);
@@ -1798,7 +1813,11 @@ void DialogsWidget::dragMoveEvent(QDragMoveEvent *e) {
 }
 
 void DialogsWidget::dragLeaveEvent(QDragLeaveEvent *e) {
-	if (_dragForward) updateDragInScroll(false);
+	if (_dragForward) {
+		updateDragInScroll(false);
+	} else {
+		_chooseByDragTimer.stop();
+	}
 	list.leaveEvent(0);
 	e->accept();
 }
@@ -1815,15 +1834,12 @@ void DialogsWidget::updateDragInScroll(bool inScroll) {
 }
 
 void DialogsWidget::dropEvent(QDropEvent *e) {
+	_chooseByDragTimer.stop();
 	if (scroll.geometry().contains(e->pos())) {
 		PeerData *p = list.updateFromParentDrag(mapToGlobal(e->pos()));
 		if (p) {
 			e->acceptProposedAction();
-			if (e->mimeData()->hasFormat(qsl("application/x-td-forward-selected"))) {
-				App::main()->onForward(p->id, true);
-			} else {
-				App::main()->showPeer(p->id, 0, false, true);
-			}
+			App::main()->onFilesOrForwardDrop(p->id, e->mimeData());
 		}
 	}
 }

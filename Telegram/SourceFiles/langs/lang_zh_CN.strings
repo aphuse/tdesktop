@@ -301,13 +301,14 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 
 "lng_connection_type" = "连接方式：";
 "lng_connection_auto_connecting" = "默认（连接..）";
-"lng_connection_auto" = "默认 ({type} used)";
-"lng_connection_http_proxy" = "启用代理的 HTTP 连接";
-"lng_connection_tcp_proxy" = "启用代理的 TCP 连接";
+"lng_connection_auto" = "默认 ({transport} used)";
+"lng_connection_proxy_connecting" = "通过代理连接..";
+"lng_connection_proxy" = "{transport} 代理";
 "lng_connection_header" = "连接类型";
 "lng_connection_auto_rb" = "自动 (TCP if available or HTTP)";
 "lng_connection_http_proxy_rb" = "HTTP with custom http-proxy";
 "lng_connection_tcp_proxy_rb" = "TCP with custom socks5-proxy";
+"lng_connection_try_ipv6" = "尝试通过 IPv6 连接";
 "lng_connection_host_ph" = "主机名";
 "lng_connection_port_ph" = "端口";
 "lng_connection_user_ph" = "用户名";
@@ -601,7 +602,7 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 
 "lng_new_version_wrap" = "Telegram Desktop 已更新到版本 {version}\n\n{changes}\n\n完整的更新日志：\n{link}";
 "lng_new_version_minor" = "- 错误修复和其他小的改进";
-"lng_new_version_text" = "这个新版本为聊天机器人了添加新的API，对每个人都是开放的。如果你是个设计师，你可以创建用于游戏或者服务的机器人。在 {blog_link} 查看更多信息。";
+"lng_new_version_text" = "- 使用拖放来转发图片，媒体文件和贴图\n- 通过拖放时间戳来转发文本消息\n- 更大的贴图面板\n- 设置中的连接方式新增IPv6选项";
 
 "lng_menu_insert_unicode" = "插入Unicode控制字符";
 

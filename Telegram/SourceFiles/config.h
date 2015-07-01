@@ -17,8 +17,8 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 */
 #pragma once
 
-static const int32 AppVersion = 8032;
-static const wchar_t *AppVersionStr = L"0.8.32";
+static const int32 AppVersion = 8036;
+static const wchar_t *AppVersionStr = L"0.8.36";
 static const bool DevChannel = false;
 
 static const wchar_t *AppNameOld = L"Telegram Win (Unofficial)";
@@ -139,6 +139,8 @@ enum {
 
 	WrongPasscodeTimeout = 1500,
 	SessionsShortPollTimeout = 60000,
+
+	ChoosePeerByDragTimeout = 1000, // 1 second mouse not moved to choose dialog when dragging a file
 };
 
 inline bool isServiceUser(uint64 id) {

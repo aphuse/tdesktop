@@ -736,6 +736,14 @@ namespace {
 			};
 		} break;
 
+		case dbiTryIPv6: {
+			qint32 v;
+			stream >> v;
+			if (!_checkStreamStatus(stream)) return false;
+
+			cSetTryIPv6(v == 1);
+		} break;
+
 		case dbiSeenTrayTooltip: {
 			qint32 v;
 			stream >> v;
@@ -1789,7 +1797,7 @@ namespace Local {
 			cSetDcOptions(dcOpts);
 		}
 
-		quint32 size = 10 * (sizeof(quint32) + sizeof(qint32));
+		quint32 size = 11 * (sizeof(quint32) + sizeof(qint32));
 		for (mtpDcOptions::const_iterator i = dcOpts.cbegin(), e = dcOpts.cend(); i != e; ++i) {
 			size += sizeof(quint32) + sizeof(quint32) + sizeof(quint32);
 			size += sizeof(quint32) + _stringSize(QString::fromUtf8(i->ip.data(), i->ip.size()));
@@ -1827,6 +1835,7 @@ namespace Local {
 			const ConnectionProxy &proxy(cConnectionProxy());
 			data.stream << proxy.host << qint32(proxy.port) << proxy.user << proxy.password;
 		}
+		data.stream << quint32(dbiTryIPv6) << qint32(cTryIPv6());
 
 		TWindowPos pos(cWindowPos());
 		data.stream << quint32(dbiWindowPosition) << qint32(pos.x) << qint32(pos.y) << qint32(pos.w) << qint32(pos.h) << qint32(pos.moncrc) << qint32(pos.maximized);
@@ -2231,9 +2240,17 @@ namespace Local {
 
 	void _writeStickerSet(QDataStream &stream, uint64 setId) {
 		StickerSets::const_iterator it = cStickerSets().constFind(setId);
-		if (it == cStickerSets().cend() || it->stickers.isEmpty()) return;
+		if (it == cStickerSets().cend()) return;
 
-		stream << quint64(it->id) << quint64(it->access) << it->title << it->shortName << quint32(it->stickers.size());
+		bool notLoaded = (it->flags & MTPDstickerSet_flag_NOT_LOADED);
+		if (notLoaded) {
+			stream << quint64(it->id) << quint64(it->access) << it->title << it->shortName << qint32(-it->count) << qint32(it->hash) << qint32(it->flags);
+			return;
+		} else {
+			if (it->stickers.isEmpty()) return;
+		}
+
+		stream << quint64(it->id) << quint64(it->access) << it->title << it->shortName << qint32(it->stickers.size()) << qint32(it->hash) << qint32(it->flags);
 		for (StickerPack::const_iterator j = it->stickers.cbegin(), e = it->stickers.cend(); j != e; ++j) {
 			DocumentData *doc = *j;
 			stream << quint64(doc->id) << quint64(doc->access) << qint32(doc->date) << doc->name << doc->mime << qint32(doc->dc) << qint32(doc->size) << qint32(doc->dimensions.width()) << qint32(doc->dimensions.height()) << qint32(doc->type) << doc->sticker->alt;
@@ -2266,17 +2283,20 @@ namespace Local {
 			}
 			_writeMap();
 		} else {
-			if (!_stickersKey) {
-				_stickersKey = genKey();
-				_mapChanged = true;
-				_writeMap(WriteMapFast);
-			}
+			int32 setsCount = 0;
 			quint32 size = sizeof(quint32) + _bytearraySize(cStickersHash());
 			for (StickerSets::const_iterator i = sets.cbegin(); i != sets.cend(); ++i) {
-				if (i->stickers.isEmpty()) continue;
+				bool notLoaded = (i->flags & MTPDstickerSet_flag_NOT_LOADED);
+				if (notLoaded) {
+					if (!(i->flags & MTPDstickerSet_flag_disabled)) { // waiting to receive
+						return;
+					}
+				} else {
+					if (i->stickers.isEmpty()) continue;
+				}
 
-				// id + access + title + shortName + stickersCount
-				size += sizeof(quint64) * 2 + _stringSize(i->title) + _stringSize(i->shortName) + sizeof(quint32);
+				// id + access + title + shortName + stickersCount + hash + flags
+				size += sizeof(quint64) * 2 + _stringSize(i->title) + _stringSize(i->shortName) + sizeof(quint32) + sizeof(qint32) * 2;
 				for (StickerPack::const_iterator j = i->stickers.cbegin(), e = i->stickers.cend(); j != e; ++j) {
 					DocumentData *doc = *j;
 
@@ -2286,10 +2306,16 @@ namespace Local {
 					// thumb-width + thumb-height + thumb-dc + thumb-volume + thumb-local + thumb-secret
 					size += sizeof(qint32) + sizeof(qint32) + sizeof(qint32) + sizeof(quint64) + sizeof(qint32) + sizeof(quint64);
 				}
+				++setsCount;
+			}
+
+			if (!_stickersKey) {
+				_stickersKey = genKey();
+				_mapChanged = true;
+				_writeMap(WriteMapFast);
 			}
 			EncryptedDescriptor data(size);
-			data.stream << quint32(cStickerSets().size()) << cStickersHash();
-			_writeStickerSet(data.stream, DefaultStickerSetId);
+			data.stream << quint32(setsCount) << cStickersHash();
 			_writeStickerSet(data.stream, CustomStickerSetId);
 			for (StickerSetsOrder::const_iterator i = cStickerSetsOrder().cbegin(), e = cStickerSetsOrder().cend(); i != e; ++i) {
 				_writeStickerSet(data.stream, *i);
@@ -2312,15 +2338,17 @@ namespace Local {
 
 		StickerSets &sets(cRefStickerSets());
 		sets.clear();
-		cSetStickerSetsOrder(StickerSetsOrder());
+
+		StickerSetsOrder &order(cRefStickerSetsOrder());
+		order.clear();
 
 		RecentStickerPack &recent(cRefRecentStickers());
 		recent.clear();
 
 		cSetStickersHash(QByteArray());
 
-		StickerSet &def(sets.insert(DefaultStickerSetId, StickerSet(DefaultStickerSetId, 0, lang(lng_stickers_default_set), QString())).value());
-		StickerSet &custom(sets.insert(CustomStickerSetId, StickerSet(CustomStickerSetId, 0, lang(lng_custom_stickers), QString())).value());
+		StickerSet &def(sets.insert(DefaultStickerSetId, StickerSet(DefaultStickerSetId, 0, lang(lng_stickers_default_set), QString(), 0, 0, MTPDstickerSet_flag_official)).value());
+		StickerSet &custom(sets.insert(CustomStickerSetId, StickerSet(CustomStickerSetId, 0, lang(lng_custom_stickers), QString(), 0, 0, 0)).value());
 
 		QMap<uint64, bool> read;
 		while (!stickers.stream.atEnd()) {
@@ -2351,12 +2379,18 @@ namespace Local {
 
 			if (value > 0) {
 				def.stickers.push_back(doc);
+				++def.count;
 			} else {
 				custom.stickers.push_back(doc);
+				++custom.count;
 			}
 			if (recent.size() < StickerPanPerRow * StickerPanRowsPerPage && qAbs(value) > 1) recent.push_back(qMakePair(doc, qAbs(value)));
 		}
-		if (def.stickers.isEmpty()) sets.remove(DefaultStickerSetId);
+		if (def.stickers.isEmpty()) {
+			sets.remove(DefaultStickerSetId);
+		} else {
+			order.push_front(DefaultStickerSetId);
+		}
 		if (custom.stickers.isEmpty()) sets.remove(CustomStickerSetId);
 
 		writeStickers();
@@ -2396,11 +2430,18 @@ namespace Local {
 		for (uint32 i = 0; i < cnt; ++i) {
 			quint64 setId = 0, setAccess = 0;
 			QString setTitle, setShortName;
-			quint32 scnt = 0;
+			qint32 scnt = 0;
 			stickers.stream >> setId >> setAccess >> setTitle >> setShortName >> scnt;
+
+			qint32 setHash = 0, setFlags = 0;
+			if (stickers.version > 8033) {
+				stickers.stream >> setHash >> setFlags;
+			}
 
 			if (setId == DefaultStickerSetId) {
 				setTitle = lang(lng_stickers_default_set);
+				setFlags |= MTPDstickerSet_flag_official;
+				order.push_front(setId);
 			} else if (setId == CustomStickerSetId) {
 				setTitle = lang(lng_custom_stickers);
 			} else if (setId) {
@@ -2408,11 +2449,16 @@ namespace Local {
 			} else {
 				continue;
 			}
-			StickerSet &set(sets.insert(setId, StickerSet(setId, setAccess, setTitle, setShortName)).value());
+			StickerSet &set(sets.insert(setId, StickerSet(setId, setAccess, setTitle, setShortName, 0, setHash, setFlags)).value());
+			if (scnt < 0) { // disabled not loaded set
+				set.count = -scnt;
+				continue;
+			}
+
 			set.stickers.reserve(scnt);
 
 			QMap<uint64, bool> read;
-			for (uint32 j = 0; j < scnt; ++j) {
+			for (int32 j = 0; j < scnt; ++j) {
 				quint64 id, access;
 				QString name, mime, alt;
 				qint32 date, dc, size, width, height, type, typeOfSet;
@@ -2456,6 +2502,7 @@ namespace Local {
 				if (!doc->sticker) continue;
 
 				set.stickers.push_back(doc);
+				++set.count;
 			}
 		}
 
@@ -2771,7 +2818,7 @@ namespace Local {
 						if (!QDir(di.filePath()).removeRecursively()) result = false;
 					} else {
 						QString path = di.filePath();
-						if (!path.endsWith(QLatin1String("map0")) && !path.endsWith(QLatin1String("map1"))) {
+						if (!path.endsWith(qstr("map0")) && !path.endsWith(qstr("map1"))) {
 							if (!QFile::remove(di.filePath())) result = false;
 						}
 					}

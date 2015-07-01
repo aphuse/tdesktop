@@ -106,6 +106,8 @@ struct PeerData {
 static const uint64 UserNoAccess = 0xFFFFFFFFFFFFFFFFULL;
 
 class PeerLink : public ITextLink {
+	TEXT_LINK_CLASS(PeerLink)
+
 public:
 	PeerLink(PeerData *peer) : _peer(peer) {
 	}
@@ -136,9 +138,11 @@ struct BotInfo {
 	QString startToken, startGroupToken;
 };
 
+static const PhotoId UnknownPeerPhotoId = 0xFFFFFFFFFFFFFFFFULL;
+
 struct PhotoData;
 struct UserData : public PeerData {
-	UserData(const PeerId &id) : PeerData(id), photoId(0), lnk(new PeerLink(this)), onlineTill(0), contact(-1), photosCount(-1), botInfo(0) {
+	UserData(const PeerId &id) : PeerData(id), photoId(UnknownPeerPhotoId), lnk(new PeerLink(this)), onlineTill(0), contact(-1), photosCount(-1), botInfo(0) {
 	}
 	void setPhoto(const MTPUserProfilePhoto &photo);
 	void setName(const QString &first, const QString &last, const QString &phoneName, const QString &username);
@@ -167,9 +171,9 @@ struct UserData : public PeerData {
 };
 
 struct ChatData : public PeerData {
-	ChatData(const PeerId &id) : PeerData(id), count(0), date(0), version(0), left(false), forbidden(true), botStatus(0), photoId(0) {
+	ChatData(const PeerId &id) : PeerData(id), count(0), date(0), version(0), left(false), forbidden(true), botStatus(0), photoId(UnknownPeerPhotoId) {
 	}
-	void setPhoto(const MTPChatPhoto &photo, const PhotoId &phId = 0);
+	void setPhoto(const MTPChatPhoto &photo, const PhotoId &phId = UnknownPeerPhotoId);
 	int32 count;
 	int32 date;
 	int32 version;
@@ -234,6 +238,8 @@ struct PhotoData {
 };
 
 class PhotoLink : public ITextLink {
+	TEXT_LINK_CLASS(PhotoLink)
+
 public:
 	PhotoLink(PhotoData *photo) : _photo(photo), _peer(0) {
 	}
@@ -313,6 +319,8 @@ struct VideoData {
 };
 
 class VideoLink : public ITextLink {
+	TEXT_LINK_CLASS(VideoLink)
+
 public:
 	VideoLink(VideoData *video) : _video(video) {
 	}
@@ -325,6 +333,8 @@ private:
 };
 
 class VideoSaveLink : public VideoLink {
+	TEXT_LINK_CLASS(VideoSaveLink)
+
 public:
 	VideoSaveLink(VideoData *video) : VideoLink(video) {
 	}
@@ -333,6 +343,8 @@ public:
 };
 
 class VideoOpenLink : public VideoLink {
+	TEXT_LINK_CLASS(VideoOpenLink)
+
 public:
 	VideoOpenLink(VideoData *video) : VideoLink(video) {
 	}
@@ -340,6 +352,8 @@ public:
 };
 
 class VideoCancelLink : public VideoLink {
+	TEXT_LINK_CLASS(VideoCancelLink)
+
 public:
 	VideoCancelLink(VideoData *video) : VideoLink(video) {
 	}
@@ -400,6 +414,8 @@ struct AudioData {
 };
 
 class AudioLink : public ITextLink {
+	TEXT_LINK_CLASS(AudioLink)
+
 public:
 	AudioLink(AudioData *audio) : _audio(audio) {
 	}
@@ -412,6 +428,8 @@ private:
 };
 
 class AudioSaveLink : public AudioLink {
+	TEXT_LINK_CLASS(AudioSaveLink)
+
 public:
 	AudioSaveLink(AudioData *audio) : AudioLink(audio) {
 	}
@@ -420,6 +438,8 @@ public:
 };
 
 class AudioOpenLink : public AudioLink {
+	TEXT_LINK_CLASS(AudioOpenLink)
+
 public:
 	AudioOpenLink(AudioData *audio) : AudioLink(audio) {
 	}
@@ -427,6 +447,8 @@ public:
 };
 
 class AudioCancelLink : public AudioLink {
+	TEXT_LINK_CLASS(AudioCancelLink)
+
 public:
 	AudioCancelLink(AudioData *audio) : AudioLink(audio) {
 	}
@@ -446,11 +468,11 @@ struct StickerData {
 };
 
 enum DocumentType {
-	FileDocument,
-	VideoDocument,
-	AudioDocument,
-	StickerDocument,
-	AnimatedDocument
+	FileDocument     = 0,
+	VideoDocument    = 1,
+	AudioDocument    = 2,
+	StickerDocument  = 3,
+	AnimatedDocument = 4,
 };
 struct DocumentData {
 	DocumentData(const DocumentId &id, const uint64 &access = 0, int32 date = 0, const QVector<MTPDocumentAttribute> &attributes = QVector<MTPDocumentAttribute>(), const QString &mime = QString(), const ImagePtr &thumb = ImagePtr(), int32 dc = 0, int32 size = 0);
@@ -518,6 +540,8 @@ struct DocumentData {
 };
 
 class DocumentLink : public ITextLink {
+	TEXT_LINK_CLASS(DocumentLink)
+
 public:
 	DocumentLink(DocumentData *document) : _document(document) {
 	}
@@ -530,6 +554,8 @@ private:
 };
 
 class DocumentSaveLink : public DocumentLink {
+	TEXT_LINK_CLASS(DocumentSaveLink)
+
 public:
 	DocumentSaveLink(DocumentData *document) : DocumentLink(document) {
 	}
@@ -538,6 +564,8 @@ public:
 };
 
 class DocumentOpenLink : public DocumentLink {
+	TEXT_LINK_CLASS(DocumentOpenLink)
+
 public:
 	DocumentOpenLink(DocumentData *document) : DocumentLink(document) {
 	}
@@ -545,6 +573,8 @@ public:
 };
 
 class DocumentCancelLink : public DocumentLink {
+	TEXT_LINK_CLASS(DocumentCancelLink)
+
 public:
 	DocumentCancelLink(DocumentData *document) : DocumentLink(document) {
 	}
@@ -558,9 +588,9 @@ enum WebPageType {
 	WebPageArticle
 };
 inline WebPageType toWebPageType(const QString &type) {
-	if (type == QLatin1String("photo")) return WebPagePhoto;
-	if (type == QLatin1String("video")) return WebPageVideo;
-	if (type == QLatin1String("profile")) return WebPageProfile;
+	if (type == qstr("photo")) return WebPagePhoto;
+	if (type == qstr("video")) return WebPageVideo;
+	if (type == qstr("profile")) return WebPageProfile;
 	return WebPageArticle;
 }
 
