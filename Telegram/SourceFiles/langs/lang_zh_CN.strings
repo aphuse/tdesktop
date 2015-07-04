@@ -368,6 +368,7 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 "lng_profile_files_header" = "文件概览";
 "lng_profile_audios" = "{count:_not_used_|# 条语音信息|# 条语音信息} »";
 "lng_profile_audios_header" = "语音信息概览";
+"lng_profile_audio_files_header" = "播放列表";
 "lng_profile_show_all_types" = "显示所有类型";
 "lng_profile_copy_phone" = "复制手机号";
 
@@ -602,7 +603,7 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 
 "lng_new_version_wrap" = "Telegram Desktop 已更新到版本 {version}\n\n{changes}\n\n完整的更新日志：\n{link}";
 "lng_new_version_minor" = "- 错误修复和其他小的改进";
-"lng_new_version_text" = "- 使用拖放来转发图片，媒体文件和贴图\n- 通过拖放时间戳来转发文本消息\n- 更大的贴图面板\n- 设置中的连接方式新增IPv6选项";
+"lng_new_version_text" = "- 改进应用内置的媒体播放器\n- 错误修复和其他小的改进";
 
 "lng_menu_insert_unicode" = "插入Unicode控制字符";
 
