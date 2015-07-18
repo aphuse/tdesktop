@@ -305,10 +305,10 @@ History::History(const PeerId &peerId) : width(0), height(0)
 , oldLoaded(false)
 , newLoaded(true)
 , lastMsg(0)
-, activeMsgId(0)
 , draftToId(0)
 , lastWidth(0)
 , lastScrollTop(History::ScrollMax)
+, lastShowAtMsgId(ShowAtUnreadMsgId)
 , mute(isNotifyMuted(peer->notify))
 , lastKeyboardInited(false)
 , lastKeyboardUsed(false)
@@ -622,18 +622,79 @@ HistoryItem *History::createItem(HistoryBlock *block, const MTPmessage &msg, boo
 		result = new HistoryServiceMsg(this, block, msg.c_messageEmpty().vid.v, date(), lang(lng_message_empty));
 	break;
 
-	case mtpc_message:
-		if ((msg.c_message().has_fwd_date() && msg.c_message().vfwd_date.v > 0) || (msg.c_message().has_fwd_from_id() && msg.c_message().vfwd_from_id.v != 0)) {
-			result = new HistoryForwarded(this, block, msg.c_message());
-		} else if (msg.c_message().has_reply_to_msg_id() && msg.c_message().vreply_to_msg_id.v > 0) {
-			result = new HistoryReply(this, block, msg.c_message());
+	case mtpc_message: {
+		const MTPDmessage m(msg.c_message());
+		int badMedia = 0; // 1 - unsupported, 2 - empty
+		switch (m.vmedia.type()) {
+		case mtpc_messageMediaEmpty: break;
+		case mtpc_messageMediaGeo:
+			switch (m.vmedia.c_messageMediaGeo().vgeo.type()) {
+			case mtpc_geoPoint: break;
+			case mtpc_geoPointEmpty: badMedia = 2; break;
+			default: badMedia = 1; break;
+			}
+			break;
+		case mtpc_messageMediaVenue:
+			switch (m.vmedia.c_messageMediaVenue().vgeo.type()) {
+			case mtpc_geoPoint: break;
+			case mtpc_geoPointEmpty: badMedia = 2; break;
+			default: badMedia = 1; break;
+			}
+			break;
+		case mtpc_messageMediaPhoto:
+			switch (m.vmedia.c_messageMediaPhoto().vphoto.type()) {
+			case mtpc_photo: break;
+			case mtpc_photoEmpty: badMedia = 2; break;
+			default: badMedia = 1; break;
+			}
+			break;
+		case mtpc_messageMediaVideo:
+			switch (m.vmedia.c_messageMediaVideo().vvideo.type()) {
+			case mtpc_video: break;
+			case mtpc_videoEmpty: badMedia = 2; break;
+			default: badMedia = 1; break;
+			}
+			break;
+		case mtpc_messageMediaAudio:
+			switch (m.vmedia.c_messageMediaAudio().vaudio.type()) {
+			case mtpc_audio: break;
+			case mtpc_audioEmpty: badMedia = 2; break;
+			default: badMedia = 1; break;
+			}
+			break;
+		case mtpc_messageMediaDocument:
+			switch (m.vmedia.c_messageMediaDocument().vdocument.type()) {
+			case mtpc_document: break;
+			case mtpc_documentEmpty: badMedia = 2; break;
+			default: badMedia = 1; break;
+			}
+			break;
+		case mtpc_messageMediaWebPage:
+			switch (m.vmedia.c_messageMediaWebPage().vwebpage.type()) {
+			case mtpc_webPage:
+			case mtpc_webPageEmpty:
+			case mtpc_webPagePending: break;
+			default: badMedia = 1; break;
+			}
+			break;
+		case mtpc_messageMediaUnsupported:
+		default: badMedia = 1; break;
+		}
+		if (badMedia) {
+			result = new HistoryServiceMsg(this, block, m.vid.v, date(m.vdate), lang((badMedia == 2) ? lng_message_empty : lng_media_unsupported), m.vflags.v, 0, m.vfrom_id.v);
 		} else {
-			result = new HistoryMessage(this, block, msg.c_message());
+			if ((m.has_fwd_date() && m.vfwd_date.v > 0) || (m.has_fwd_from_id() && m.vfwd_from_id.v != 0)) {
+				result = new HistoryForwarded(this, block, m);
+			} else if (m.has_reply_to_msg_id() && m.vreply_to_msg_id.v > 0) {
+				result = new HistoryReply(this, block, m);
+			} else {
+				result = new HistoryMessage(this, block, m);
+			}
+			if (m.has_reply_markup()) {
+				App::feedReplyMarkup(msgId, m.vreply_markup);
+			}
 		}
-		if (msg.c_message().has_reply_markup()) {
-			App::feedReplyMarkup(msgId, msg.c_message().vreply_markup);
-		}
-	break;
+	} break;
 
 	case mtpc_messageService: {
 		const MTPDmessageService &d(msg.c_messageService());
@@ -949,7 +1010,7 @@ void History::addToFront(const QVector<MTPMessage> &slice) {
 		block->height += dayItem->resize(width);
 	}
 	if (block->size()) {
-		if (wasMsgCount < unreadCount && msgCount >= unreadCount && !activeMsgId) {
+		if (loadedAtBottom() && wasMsgCount < unreadCount && msgCount >= unreadCount) {
 			for (int32 i = block->size(); i > 0; --i) {
 				if ((*block)[i - 1]->itemType() == HistoryItem::MsgType) {
 					++wasMsgCount;
@@ -1172,6 +1233,7 @@ void History::inboxRead(int32 upTo) {
 	if (!dialogs.isEmpty()) {
 		if (App::main()) App::main()->dlgUpdated(dialogs[0]);
 	}
+	showFrom = 0;
 	App::wnd()->notifyClear(this);
 	clearNotifications();
 }
@@ -1193,7 +1255,7 @@ void History::outboxRead(HistoryItem *wasRead) {
 
 void History::setUnreadCount(int32 newUnreadCount, bool psUpdate) {
 	if (unreadCount != newUnreadCount) {
-		if (!unreadCount && newUnreadCount == 1 && loadedAtBottom()) {
+		if (newUnreadCount == 1 && loadedAtBottom()) {
 			showFrom = isEmpty() ? 0 : back()->back();
 		} else if (!newUnreadCount) {
 			showFrom = 0;
@@ -1222,10 +1284,6 @@ void History::setMsgCount(int32 newMsgCount) {
 }
 
 void History::getNextShowFrom(HistoryBlock *block, int32 i) {
-	if (!loadedAtBottom()) {
-		showFrom = 0;
-		return;
-	}
 	if (i >= 0) {
 		int32 l = block->size();
 		for (++i; i < l; ++i) {
@@ -1252,7 +1310,7 @@ void History::getNextShowFrom(HistoryBlock *block, int32 i) {
 }
 
 void History::addUnreadBar() {
-	if (unreadBar || !showFrom || !unreadCount || !loadedAtBottom()) return;
+	if (unreadBar || !showFrom || showFrom->detached() || !unreadCount) return;
 
 	HistoryBlock *block = showFrom->block();
 	int32 i = block->indexOf(showFrom);
@@ -1280,16 +1338,34 @@ void History::clearNotifications() {
 	notifies.clear();
 }
 
-bool History::readyForWork() const {
-	return activeMsgId ? !isEmpty() : (unreadCount <= msgCount);
-}
-
 bool History::loadedAtBottom() const {
 	return newLoaded;
 }
 
 bool History::loadedAtTop() const {
 	return oldLoaded;
+}
+
+bool History::isReadyFor(MsgId msgId, bool check) const {
+	if (msgId == ShowAtTheEndMsgId) {
+		return loadedAtBottom();
+	} else if (msgId == ShowAtUnreadMsgId) {
+		return check ? (loadedAtBottom() && (msgCount >= unreadCount)) : !isEmpty();
+	} else if (check) {
+		HistoryItem *item = App::histItemById(msgId);
+		return item && item->history() == this && !item->detached();
+	}
+	return !isEmpty();
+}
+
+void History::getReadyFor(MsgId msgId) {
+	if (!isReadyFor(msgId, true)) {
+		clear(true);
+		newLoaded = (msgId == ShowAtTheEndMsgId) || (lastMsg && !lastMsg->detached());
+		oldLoaded = false;
+		lastWidth = 0;
+		lastShowAtMsgId = msgId;
+	}
 }
 
 void History::fixLastMessage(bool wasAtBottom) {
@@ -1304,37 +1380,6 @@ void History::fixLastMessage(bool wasAtBottom) {
 			App::main()->checkPeerHistory(peer);
 		}
 	}
-}
-
-void History::loadAround(MsgId msgId) {
-	if (activeMsgId != msgId) {
-		activeMsgId = msgId;
-		lastWidth = 0;
-		if (activeMsgId) {
-			HistoryItem *item = App::histItemById(activeMsgId);
-			if (!item || !item->block()) {
-				clear(true);
-			}
-			newLoaded = lastMsg && !lastMsg->detached();
-		} else {
-			if (!loadedAtBottom()) {
-				clear(true);
-			}
-			newLoaded = isEmpty() || (lastMsg && !lastMsg->detached());
-		}
-	}
-}
-
-bool History::canShowAround(MsgId msgId) const {
-	if (activeMsgId != msgId) {
-		if (msgId) {
-			HistoryItem *item = App::histItemById(msgId);
-			return item && item->block();
-		} else {
-			return loadedAtBottom();
-		}
-	}
-	return true;
 }
 
 MsgId History::minMsgId() const {
@@ -4938,7 +4983,6 @@ void HistoryMessage::initTime() {
 
 void HistoryMessage::initMedia(const MTPMessageMedia &media, QString &currentText) {
 	switch (media.type()) {
-	case mtpc_messageMediaEmpty: initMediaFromText(currentText); break;
 	case mtpc_messageMediaContact: {
 		const MTPDmessageMediaContact &d(media.c_messageMediaContact());
 		_media = new HistoryContact(d.vuser_id.v, qs(d.vfirst_name), qs(d.vlast_name), qs(d.vphone_number));
@@ -4995,8 +5039,7 @@ void HistoryMessage::initMedia(const MTPMessageMedia &media, QString &currentTex
 		} break;
 		}
 	} break;
-	case mtpc_messageMediaUnsupported:
-	default: currentText += " (unsupported media)"; break;
+	default: initMediaFromText(currentText); break;
 	};
 	if (_media) _media->regItem(this);
 }
@@ -5125,18 +5168,16 @@ void HistoryMessage::setMedia(const MTPmessageMedia &media) {
 void HistoryMessage::draw(QPainter &p, uint32 selection) const {
 	textstyleSet(&(out() ? st::outTextStyle : st::inTextStyle));
 
-	if (id == _history->activeMsgId) {
-		uint64 ms = App::main() ? App::main()->animActiveTime() : 0;
-		if (ms) {
-			if (ms > st::activeFadeInDuration + st::activeFadeOutDuration) {
-				App::main()->stopAnimActive();
-			} else {
-				float64 dt = (ms > st::activeFadeInDuration) ? (1 - (ms - st::activeFadeInDuration) / float64(st::activeFadeOutDuration)) : (ms / float64(st::activeFadeInDuration));
-				float64 o = p.opacity();
-				p.setOpacity(o * dt);
-				p.fillRect(0, 0, _history->width, _height, textstyleCurrent()->selectOverlay->b);
-				p.setOpacity(o);
-			}
+	uint64 ms = App::main() ? App::main()->animActiveTime(id) : 0;
+	if (ms) {
+		if (ms > st::activeFadeInDuration + st::activeFadeOutDuration) {
+			App::main()->stopAnimActive();
+		} else {
+			float64 dt = (ms > st::activeFadeInDuration) ? (1 - (ms - st::activeFadeInDuration) / float64(st::activeFadeOutDuration)) : (ms / float64(st::activeFadeInDuration));
+			float64 o = p.opacity();
+			p.setOpacity(o * dt);
+			p.fillRect(0, 0, _history->width, _height, textstyleCurrent()->selectOverlay->b);
+			p.setOpacity(o);
 		}
 	}
 
@@ -6020,8 +6061,8 @@ HistoryServiceMsg::HistoryServiceMsg(History *history, HistoryBlock *block, cons
 	setMessageByAction(msg.vaction);
 }
 
-HistoryServiceMsg::HistoryServiceMsg(History *history, HistoryBlock *block, MsgId msgId, QDateTime date, const QString &msg, int32 flags, HistoryMedia *media) :
-	HistoryItem(history, block, msgId, flags, date, 0)
+HistoryServiceMsg::HistoryServiceMsg(History *history, HistoryBlock *block, MsgId msgId, QDateTime date, const QString &msg, int32 flags, HistoryMedia *media, int32 from) :
+	HistoryItem(history, block, msgId, flags, date, from)
 , _text(st::msgServiceFont, msg, _historySrvOptions, st::dlgMinWidth)
 , _media(media)
 {
@@ -6049,19 +6090,17 @@ QString HistoryServiceMsg::inReplyText() const {
 }
 
 void HistoryServiceMsg::draw(QPainter &p, uint32 selection) const {
-	if (id == _history->activeMsgId) {
-		uint64 ms = App::main() ? App::main()->animActiveTime() : 0;
-		if (ms) {
-			if (ms > st::activeFadeInDuration + st::activeFadeOutDuration) {
-				App::main()->stopAnimActive();
-			} else {
-				textstyleSet(&st::inTextStyle);
-				float64 dt = (ms > st::activeFadeInDuration) ? (1 - (ms - st::activeFadeInDuration) / float64(st::activeFadeOutDuration)) : (ms / float64(st::activeFadeInDuration));
-				float64 o = p.opacity();
-				p.setOpacity(o * dt);
-				p.fillRect(0, 0, _history->width, _height, textstyleCurrent()->selectOverlay->b);
-				p.setOpacity(o);
-			}
+	uint64 ms = App::main() ? App::main()->animActiveTime(id) : 0;
+	if (ms) {
+		if (ms > st::activeFadeInDuration + st::activeFadeOutDuration) {
+			App::main()->stopAnimActive();
+		} else {
+			textstyleSet(&st::inTextStyle);
+			float64 dt = (ms > st::activeFadeInDuration) ? (1 - (ms - st::activeFadeInDuration) / float64(st::activeFadeOutDuration)) : (ms / float64(st::activeFadeInDuration));
+			float64 o = p.opacity();
+			p.setOpacity(o * dt);
+			p.fillRect(0, 0, _history->width, _height, textstyleCurrent()->selectOverlay->b);
+			p.setOpacity(o);
 		}
 	}
 
