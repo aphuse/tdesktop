@@ -25,6 +25,9 @@ typedef uint64 DocumentId;
 typedef uint64 WebPageId;
 typedef int32 MsgId;
 
+static const MsgId ShowAtTheEndMsgId = -0x40000000;
+static const MsgId ShowAtUnreadMsgId = 0;
+
 struct NotifySettings {
 	NotifySettings() : mute(0), sound("default"), previews(true), events(1) {
 	}
@@ -678,7 +681,7 @@ inline WebPageType toWebPageType(const QString &type) {
 }
 
 struct WebPageData {
-	WebPageData(const WebPageId &id, WebPageType type = WebPageArticle, const QString &url = QString(), const QString &displayUrl = QString(), const QString &siteName = QString(), const QString &title = QString(), const QString &description = QString(), PhotoData *photo = 0, int32 duration = 0, const QString &author = QString(), int32 pendingTill = 0);
+	WebPageData(const WebPageId &id, WebPageType type = WebPageArticle, const QString &url = QString(), const QString &displayUrl = QString(), const QString &siteName = QString(), const QString &title = QString(), const QString &description = QString(), PhotoData *photo = 0, int32 duration = 0, const QString &author = QString(), int32 pendingTill = -1);
 	
 	void forget() {
 		if (photo) photo->forget();

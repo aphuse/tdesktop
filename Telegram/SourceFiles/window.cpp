@@ -287,7 +287,7 @@ void NotifyWindow::mousePressEvent(QMouseEvent *e) {
 			App::wnd()->notifyClear();
 		} else {
 			App::wnd()->hideSettings();
-			App::main()->showPeer(peer, (history->peer->chat && item && item->notifyByFrom() && item->id > 0) ? item->id : 0, false, true);
+			App::main()->showPeerHistory(peer, (history->peer->chat && item && item->notifyByFrom() && item->id > 0) ? item->id : ShowAtUnreadMsgId);
 		}
 		e->ignore();
 	}
@@ -429,28 +429,27 @@ void Window::init() {
 
 	title = new TitleWidget(this);
 
-	psInitSize();
-	psUpdateWorkmode();
+    psInitSize();
 }
 
 void Window::firstShow() {
 #ifdef Q_OS_WIN
-    trayIconMenu = new ContextMenu(this);
+	trayIconMenu = new ContextMenu(this);
 #else
 	trayIconMenu = new QMenu(this);
 	trayIconMenu->setFont(QFont("Tahoma"));
 #endif
-    if (cPlatform() == dbipWindows || cPlatform() == dbipMac) {
-        trayIconMenu->addAction(lang(lng_minimize_to_tray), this, SLOT(minimizeToTray()))->setEnabled(true);
-        trayIconMenu->addAction(lang(lng_quit_from_tray), this, SLOT(quitFromTray()))->setEnabled(true);
-    } else {
-        trayIconMenu->addAction(lang(lng_open_from_tray), this, SLOT(showFromTray()))->setEnabled(true);
-        trayIconMenu->addAction(lang(lng_minimize_to_tray), this, SLOT(minimizeToTray()))->setEnabled(true);
-        trayIconMenu->addAction(lang(lng_quit_from_tray), this, SLOT(quitFromTray()))->setEnabled(true);
-    }
+	if (cPlatform() == dbipWindows || cPlatform() == dbipMac) {
+		trayIconMenu->addAction(lang(lng_minimize_to_tray), this, SLOT(minimizeToTray()))->setEnabled(true);
+		trayIconMenu->addAction(lang(lng_quit_from_tray), this, SLOT(quitFromTray()))->setEnabled(true);
+	} else {
+		trayIconMenu->addAction(lang(lng_open_from_tray), this, SLOT(showFromTray()))->setEnabled(true);
+		trayIconMenu->addAction(lang(lng_minimize_to_tray), this, SLOT(minimizeToTray()))->setEnabled(true);
+		trayIconMenu->addAction(lang(lng_quit_from_tray), this, SLOT(quitFromTray()))->setEnabled(true);
+	}
+	psUpdateWorkmode();
 
 	psFirstShow();
-
 	updateTrayMenu();
 }
 
@@ -1426,7 +1425,7 @@ void Window::notifyShowNext(NotifyWindow *remove) {
 				if (j == notifyWhenMaps.end()) {
 					history->clearNotifications();
 					i = notifyWaiters.erase(i);
-					if (notifyHistory) notifyWaiter = notifyWaiters.find(notifyHistory);
+					notifyWaiter = notifyHistory ? notifyWaiters.find(notifyHistory) : notifyWaiters.end();
 					continue;
 				}
 				do {
@@ -1442,7 +1441,7 @@ void Window::notifyShowNext(NotifyWindow *remove) {
 			if (!history->currentNotification()) {
 				notifyWhenMaps.remove(history);
 				i = notifyWaiters.erase(i);
-				if (notifyHistory) notifyWaiter = notifyWaiters.find(notifyHistory);
+				notifyWaiter = notifyHistory ? notifyWaiters.find(notifyHistory) : notifyWaiters.end();
 				continue;
 			}
 			uint64 when = i.value().when;

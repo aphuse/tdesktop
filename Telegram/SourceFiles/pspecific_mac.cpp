@@ -41,7 +41,7 @@ namespace {
 			Window *wnd = Application::wnd();
 			if (!wnd) return false;
 
-			return false;
+			return wnd->psFilterNativeEvent(message);
 		}
 	};
     _PsEventFilter *_psEventFilter = 0;
@@ -76,7 +76,7 @@ void MacPrivate::notifyClicked(unsigned long long peer, int msgid) {
 				tomsg = false;
 			}
 		}
-		App::main()->showPeer(history->peer->id, tomsg ? msgid : 0, false, true);
+		App::main()->showPeerHistory(history->peer->id, tomsg ? msgid : ShowAtUnreadMsgId);
 		App::wnd()->notifyClear(history);
 	}
 }
@@ -458,6 +458,10 @@ void PsMainWindow::psClearNotifies(PeerId peerId) {
 
 void PsMainWindow::psActivateNotify(NotifyWindow *w) {
 	objc_activateWnd(w->winId());
+}
+
+bool PsMainWindow::psFilterNativeEvent(void *event) {
+	return _private.filterNativeEvent(event);
 }
 
 namespace {
