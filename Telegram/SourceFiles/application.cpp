@@ -658,9 +658,9 @@ void Application::checkMapVersion() {
 		psRegisterCustomScheme();
 		if (Local::oldMapVersion()) {
 			QString versionFeatures;
-			if (cDevVersion() && Local::oldMapVersion() < 8042) {
-				versionFeatures = QString::fromUtf8("\xe2\x80\x94 Dev version will now get updated to stable as well");// .replace('@', qsl("@") + QChar(0x200D));
-			} else if (!cDevVersion() && Local::oldMapVersion() < 8043) {
+			if (cDevVersion() && Local::oldMapVersion() < 8044) {
+				versionFeatures = QString::fromUtf8("\xe2\x80\x94 Sending media and recording audio status display");// .replace('@', qsl("@") + QChar(0x200D));
+			} else if (!cDevVersion() && Local::oldMapVersion() < 8045) {
 				versionFeatures = lang(lng_new_version_minor).trimmed();
 			}
 			if (!versionFeatures.isEmpty()) {
