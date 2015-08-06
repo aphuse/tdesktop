@@ -41,7 +41,7 @@ struct Histories : public QHash<PeerId, History*>, public Animated {
 	Histories() : unreadFull(0), unreadMuted(0) {
 	}
 
-	void regTyping(History *history, UserData *user);
+	void regSendAction(History *history, UserData *user, const MTPSendMessageAction &action);
 	bool animStep(float64 ms);
 
 	void clear();
@@ -106,6 +106,7 @@ enum MediaOverviewType {
 	OverviewVideos,
 	OverviewDocuments,
 	OverviewAudios,
+	OverviewAudioDocuments,
 
 	OverviewCount
 };
@@ -127,10 +128,30 @@ inline MTPMessagesFilter typeToMediaFilter(MediaOverviewType &type) {
 	case OverviewVideos: return MTP_inputMessagesFilterVideo();
 	case OverviewDocuments: return MTP_inputMessagesFilterDocument();
 	case OverviewAudios: return MTP_inputMessagesFilterAudio();
+	case OverviewAudioDocuments: return MTP_inputMessagesFilterAudioDocuments();
 	default: type = OverviewCount; break;
 	}
 	return MTPMessagesFilter();
 }
+
+enum SendActionType {
+	SendActionTyping,
+	SendActionRecordVideo,
+	SendActionUploadVideo,
+	SendActionRecordAudio,
+	SendActionUploadAudio,
+	SendActionUploadPhoto,
+	SendActionUploadFile,
+	SendActionChooseLocation,
+	SendActionChooseContact,
+};
+struct SendAction {
+	SendAction(SendActionType type, uint64 until, int32 progress = 0) : type(type), until(until), progress(progress) {
+	}
+	SendActionType type;
+	uint64 until;
+	int32 progress;
+};
 
 class HistoryMedia;
 class HistoryMessage;
@@ -178,14 +199,12 @@ struct History : public QList<HistoryBlock*> {
 	void addUnreadBar();
 	void clearNotifications();
 
-	bool readyForWork() const; // all unread loaded or loaded around activeMsgId
 	bool loadedAtBottom() const; // last message is in the list
 	bool loadedAtTop() const; // nothing was added after loading history back
+	bool isReadyFor(MsgId msgId, bool check = false) const; // has messages for showing history at msgId
+	void getReadyFor(MsgId msgId);
 
 	void fixLastMessage(bool wasAtBottom);
-
-	void loadAround(MsgId msgId);
-	bool canShowAround(MsgId msgId) const;
 
 	MsgId minMsgId() const;
 	MsgId maxMsgId() const;
@@ -199,7 +218,6 @@ struct History : public QList<HistoryBlock*> {
 	PeerData *peer;
 	bool oldLoaded, newLoaded;
 	HistoryItem *lastMsg;
-	MsgId activeMsgId;
 
 	typedef QList<HistoryItem*> NotifyQueue;
 	NotifyQueue notifies;
@@ -249,6 +267,7 @@ struct History : public QList<HistoryBlock*> {
 	MessageCursor draftCursor;
 	bool draftPreviewCancelled;
 	int32 lastWidth, lastScrollTop;
+	MsgId lastShowAtMsgId;
 	bool mute;
 
 	bool lastKeyboardInited, lastKeyboardUsed;
@@ -273,11 +292,13 @@ struct History : public QList<HistoryBlock*> {
 
 	typedef QMap<UserData*, uint64> TypingUsers;
 	TypingUsers typing;
+	typedef QMap<UserData*, SendAction> SendActionUsers;
+	SendActionUsers sendActions;
 	QString typingStr;
 	Text typingText;
 	uint32 typingFrame;
 	bool updateTyping(uint64 ms = 0, uint32 dots = 0, bool force = false);
-	uint64 myTyping;
+	QMap<SendActionType, uint64> mySendActions;
 
 	typedef QList<MsgId> MediaOverview;
 	typedef QMap<MsgId, NullType> MediaOverviewIds;
@@ -285,6 +306,8 @@ struct History : public QList<HistoryBlock*> {
 	MediaOverview _overview[OverviewCount];
 	MediaOverviewIds _overviewIds[OverviewCount];
 	int32 _overviewCount[OverviewCount]; // -1 - not loaded, 0 - all loaded, > 0 - count, but not all loaded
+
+	void eraseFromOverview(MediaOverviewType type, MsgId msgId);
 
 	static const int32 ScrollMax = INT_MAX;
 };
@@ -636,6 +659,12 @@ class HistoryReply; // dynamic_cast optimize
 class HistoryMessage; // dynamic_cast optimize
 class HistoryForwarded; // dynamic_cast optimize
 
+enum HistoryCursorState {
+	HistoryDefaultCursorState,
+	HistoryInTextCursorState,
+	HistoryInDateCursorState
+};
+
 class HistoryMedia;
 class HistoryItem : public HistoryElem {
 public:
@@ -698,9 +727,9 @@ public:
 	virtual bool hasPoint(int32 x, int32 y) const {
 		return false;
 	}
-	virtual void getState(TextLinkPtr &lnk, bool &inText, int32 x, int32 y) const {
+	virtual void getState(TextLinkPtr &lnk, HistoryCursorState &state, int32 x, int32 y) const {
 		lnk = TextLinkPtr();
-		inText = false;
+		state = HistoryDefaultCursorState;
 	}
 	virtual void getSymbol(uint16 &symbol, bool &after, bool &upon, int32 x, int32 y) const { // from text
 		upon = hasPoint(x, y);
@@ -717,8 +746,6 @@ public:
 		return false;
 	}
 	virtual void updateMedia(const MTPMessageMedia &media) {
-	}
-	virtual void updateStickerEmoji() {
 	}
 
 	virtual QString selectedText(uint32 selection) const {
@@ -788,6 +815,8 @@ protected:
 };
 
 class MessageLink : public ITextLink {
+	TEXT_LINK_CLASS(MessageLink)
+
 public:
 	MessageLink(PeerId peer, MsgId msgid) : _peer(peer), _msgid(msgid) {
 	}
@@ -828,7 +857,7 @@ public:
 		w = qMin(width, _maxw);
 		return _height;
 	}
-	virtual void getState(TextLinkPtr &lnk, bool &inText, int32 x, int32 y, const HistoryItem *parent, int32 width = -1) const = 0;
+	virtual void getState(TextLinkPtr &lnk, HistoryCursorState &state, int32 x, int32 y, const HistoryItem *parent, int32 width = -1) const = 0;
 	virtual void draw(QPainter &p, const HistoryItem *parent, bool selected, int32 width = -1) const = 0;
 	virtual bool uploading() const {
 		return false;
@@ -848,10 +877,6 @@ public:
 		return false;
 	}
 
-	virtual bool updateStickerEmoji() {
-		return false;
-	}
-	
 	virtual bool animating() const {
 		return false;
 	}
@@ -891,7 +916,7 @@ public:
 	const QString inHistoryText() const;
 	const Text &captionForClone() const;
 	bool hasPoint(int32 x, int32 y, const HistoryItem *parent, int32 width = -1) const;
-	void getState(TextLinkPtr &lnk, bool &inText, int32 x, int32 y, const HistoryItem *parent, int32 width = -1) const;
+	void getState(TextLinkPtr &lnk, HistoryCursorState &state, int32 x, int32 y, const HistoryItem *parent, int32 width = -1) const;
 	HistoryMedia *clone() const;
 
 	PhotoData *photo() const {
@@ -923,6 +948,7 @@ private:
 };
 
 QString formatSizeText(qint64 size);
+QString formatDownloadText(qint64 ready, qint64 total);
 QString formatDurationText(qint64 duration);
 
 class HistoryVideo : public HistoryMedia {
@@ -939,7 +965,8 @@ public:
 	const QString inDialogsText() const;
 	const QString inHistoryText() const;
 	bool hasPoint(int32 x, int32 y, const HistoryItem *parent, int32 width = -1) const;
-	void getState(TextLinkPtr &lnk, bool &inText, int32 x, int32 y, const HistoryItem *parent, int32 width = -1) const;
+	int32 countHeight(const HistoryItem *parent, int32 width = -1) const;
+	void getState(TextLinkPtr &lnk, HistoryCursorState &state, int32 x, int32 y, const HistoryItem *parent, int32 width = -1) const;
 	bool uploading() const {
 		return (data->status == FileUploading);
 	}
@@ -979,7 +1006,7 @@ public:
 	const QString inDialogsText() const;
 	const QString inHistoryText() const;
 	bool hasPoint(int32 x, int32 y, const HistoryItem *parent, int32 width = -1) const;
-	void getState(TextLinkPtr &lnk, bool &inText, int32 x, int32 y, const HistoryItem *parent, int32 width = -1) const;
+	void getState(TextLinkPtr &lnk, HistoryCursorState &state, int32 x, int32 y, const HistoryItem *parent, int32 width = -1) const;
 	bool uploading() const {
 		return (data->status == FileUploading);
 	}
@@ -1022,7 +1049,7 @@ public:
 	bool uploading() const {
 		return (data->status == FileUploading);
 	}
-	void getState(TextLinkPtr &lnk, bool &inText, int32 x, int32 y, const HistoryItem *parent, int32 width = -1) const;
+	void getState(TextLinkPtr &lnk, HistoryCursorState &state, int32 x, int32 y, const HistoryItem *parent, int32 width = -1) const;
 	HistoryMedia *clone() const;
 
 	DocumentData *document() {
@@ -1038,6 +1065,9 @@ public:
 		return !data->thumb->isNull();
 	}
 	ImagePtr replyPreview();
+
+	void drawInPlaylist(QPainter &p, const HistoryItem *parent, bool selected, bool over, int32 width) const;
+	TextLinkPtr linkInPlaylist();
 
 private:
 
@@ -1067,7 +1097,7 @@ public:
 	const QString inHistoryText() const;
 	bool hasPoint(int32 x, int32 y, const HistoryItem *parent, int32 width = -1) const;
 	int32 countHeight(const HistoryItem *parent, int32 width = -1) const;
-	void getState(TextLinkPtr &lnk, bool &inText, int32 x, int32 y, const HistoryItem *parent, int32 width = -1) const;
+	void getState(TextLinkPtr &lnk, HistoryCursorState &state, int32 x, int32 y, const HistoryItem *parent, int32 width = -1) const;
 	HistoryMedia *clone() const;
 
 	DocumentData *document() {
@@ -1078,7 +1108,6 @@ public:
 	void unregItem(HistoryItem *item);
 
 	void updateFrom(const MTPMessageMedia &media);
-	bool updateStickerEmoji();
 
 private:
 
@@ -1102,7 +1131,7 @@ public:
 	const QString inDialogsText() const;
 	const QString inHistoryText() const;
 	bool hasPoint(int32 x, int32 y, const HistoryItem *parent, int32 width) const;
-	void getState(TextLinkPtr &lnk, bool &inText, int32 x, int32 y, const HistoryItem *parent, int32 width) const;
+	void getState(TextLinkPtr &lnk, HistoryCursorState &state, int32 x, int32 y, const HistoryItem *parent, int32 width) const;
 	HistoryMedia *clone() const;
 
 	void updateFrom(const MTPMessageMedia &media);
@@ -1132,7 +1161,7 @@ public:
 	const QString inDialogsText() const;
 	const QString inHistoryText() const;
 	bool hasPoint(int32 x, int32 y, const HistoryItem *parent, int32 width = -1) const;
-	void getState(TextLinkPtr &lnk, bool &inText, int32 x, int32 y, const HistoryItem *parent, int32 width = -1) const;
+	void getState(TextLinkPtr &lnk, HistoryCursorState &state, int32 x, int32 y, const HistoryItem *parent, int32 width = -1) const;
 	HistoryMedia *clone() const;
 
 	void regItem(HistoryItem *item);
@@ -1225,7 +1254,7 @@ public:
 	const QString inDialogsText() const;
 	const QString inHistoryText() const;
 	bool hasPoint(int32 x, int32 y, const HistoryItem *parent, int32 width = -1) const;
-	void getState(TextLinkPtr &lnk, bool &inText, int32 x, int32 y, const HistoryItem *parent, int32 width = -1) const;
+	void getState(TextLinkPtr &lnk, HistoryCursorState &state, int32 x, int32 y, const HistoryItem *parent, int32 width = -1) const;
 	HistoryMedia *clone() const;
 
 	bool isImageLink() const {
@@ -1267,8 +1296,8 @@ public:
 	int32 resize(int32 width, bool dontRecountText = false, const HistoryItem *parent = 0);
 	bool hasPoint(int32 x, int32 y) const;
 
-	void getState(TextLinkPtr &lnk, bool &inText, int32 x, int32 y) const;
-	virtual void getStateFromMessageText(TextLinkPtr &lnk, bool &inText, int32 x, int32 y, const QRect &r) const;
+	void getState(TextLinkPtr &lnk, HistoryCursorState &state, int32 x, int32 y) const;
+	virtual void getStateFromMessageText(TextLinkPtr &lnk, HistoryCursorState &state, int32 x, int32 y, const QRect &r) const;
 
 	void getSymbol(uint16 &symbol, bool &after, bool &upon, int32 x, int32 y) const;
 	uint32 adjustSelection(uint16 from, uint16 to, TextSelectType type) const {
@@ -1284,7 +1313,6 @@ public:
 			_media->updateFrom(media);
 		}
 	}
-	void updateStickerEmoji();
 
 	QString selectedText(uint32 selection) const;
 	QString inDialogsText() const;
@@ -1343,9 +1371,9 @@ public:
 	void drawMessageText(QPainter &p, const QRect &trect, uint32 selection) const;
 	int32 resize(int32 width, bool dontRecountText = false, const HistoryItem *parent = 0);
 	bool hasPoint(int32 x, int32 y) const;
-	void getState(TextLinkPtr &lnk, bool &inText, int32 x, int32 y) const;
-	void getStateFromMessageText(TextLinkPtr &lnk, bool &inText, int32 x, int32 y, const QRect &r) const;
-	void getForwardedState(TextLinkPtr &lnk, bool &inText, int32 x, int32 w) const;
+	void getState(TextLinkPtr &lnk, HistoryCursorState &state, int32 x, int32 y) const;
+	void getStateFromMessageText(TextLinkPtr &lnk, HistoryCursorState &state, int32 x, int32 y, const QRect &r) const;
+	void getForwardedState(TextLinkPtr &lnk, HistoryCursorState &state, int32 x, int32 w) const;
 	void getSymbol(uint16 &symbol, bool &after, bool &upon, int32 x, int32 y) const;
 
 	QDateTime dateForwarded() const {
@@ -1396,8 +1424,8 @@ public:
 	void drawMessageText(QPainter &p, const QRect &trect, uint32 selection) const;
 	int32 resize(int32 width, bool dontRecountText = false, const HistoryItem *parent = 0);
 	bool hasPoint(int32 x, int32 y) const;
-	void getState(TextLinkPtr &lnk, bool &inText, int32 x, int32 y) const;
-	void getStateFromMessageText(TextLinkPtr &lnk, bool &inText, int32 x, int32 y, const QRect &r) const;
+	void getState(TextLinkPtr &lnk, HistoryCursorState &state, int32 x, int32 y) const;
+	void getStateFromMessageText(TextLinkPtr &lnk, HistoryCursorState &state, int32 x, int32 y, const QRect &r) const;
 	void getSymbol(uint16 &symbol, bool &after, bool &upon, int32 x, int32 y) const;
 
 	UserData *replyTo() const {
@@ -1430,14 +1458,14 @@ class HistoryServiceMsg : public HistoryItem {
 public:
 
 	HistoryServiceMsg(History *history, HistoryBlock *block, const MTPDmessageService &msg);
-	HistoryServiceMsg(History *history, HistoryBlock *block, MsgId msgId, QDateTime date, const QString &msg, int32 flags = 0, HistoryMedia *media = 0);
+	HistoryServiceMsg(History *history, HistoryBlock *block, MsgId msgId, QDateTime date, const QString &msg, int32 flags = 0, HistoryMedia *media = 0, int32 from = 0);
 
 	void initDimensions(const HistoryItem *parent = 0);
 
 	void draw(QPainter &p, uint32 selection) const;
 	int32 resize(int32 width, bool dontRecountText = false, const HistoryItem *parent = 0);
 	bool hasPoint(int32 x, int32 y) const;
-	void getState(TextLinkPtr &lnk, bool &inText, int32 x, int32 y) const;
+	void getState(TextLinkPtr &lnk, HistoryCursorState &state, int32 x, int32 y) const;
 	void getSymbol(uint16 &symbol, bool &after, bool &upon, int32 x, int32 y) const;
 	uint32 adjustSelection(uint16 from, uint16 to, TextSelectType type) const {
 		return _text.adjustSelection(from, to, type);
@@ -1478,9 +1506,9 @@ class HistoryDateMsg : public HistoryServiceMsg {
 public:
 
 	HistoryDateMsg(History *history, HistoryBlock *block, const QDate &date);
-	void getState(TextLinkPtr &lnk, bool &inText, int32 x, int32 y) const {
+	void getState(TextLinkPtr &lnk, HistoryCursorState &state, int32 x, int32 y) const {
 		lnk = TextLinkPtr();
-		inText = false;
+		state = HistoryDefaultCursorState;
 	}
 	void getSymbol(uint16 &symbol, bool &after, bool &upon, int32 x, int32 y) const {
 		symbol = 0xFFFF;

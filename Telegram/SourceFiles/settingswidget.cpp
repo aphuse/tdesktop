@@ -182,7 +182,7 @@ SettingsInner::SettingsInner(SettingsWidget *parent) : QWidget(parent),
 	_passwordEdit(this, lang(lng_cloud_password_set)),
 	_passwordTurnOff(this, lang(lng_passcode_turn_off)),
 	_hasPasswordRecovery(false),
-	_connectionType(this, lng_connection_auto(lt_type, QString())),
+	_connectionType(this, lang(lng_connection_auto_connecting)),
 	_connectionTypeText(lang(lng_connection_type) + ' '),
 	_connectionTypeWidth(st::linkFont->m.width(_connectionTypeText)),
 	_showSessions(this, lang(lng_settings_show_sessions)),
@@ -190,7 +190,7 @@ SettingsInner::SettingsInner(SettingsWidget *parent) : QWidget(parent),
 {
 	if (self()) {
 		_nameText.setText(st::setNameFont, _nameCache, _textNameOptions);
-		PhotoData *selfPhoto = self()->photoId ? App::photo(self()->photoId) : 0;
+		PhotoData *selfPhoto = (self()->photoId && self()->photoId != UnknownPeerPhotoId) ? App::photo(self()->photoId) : 0;
 		if (selfPhoto && selfPhoto->date) _photoLink = TextLinkPtr(new PhotoLink(selfPhoto, self()));
 		MTP::send(MTPusers_GetFullUser(self()->inputUser), rpcDone(&SettingsInner::gotFullSelf), RPCFailHandlerPtr(), 0, 10);
 		onReloadPassword();
@@ -236,7 +236,7 @@ SettingsInner::SettingsInner(SettingsWidget *parent) : QWidget(parent),
 	connect(&_dpiAutoScale, SIGNAL(changed()), this, SLOT(onScaleAuto()));
 	connect(&_dpiSlider, SIGNAL(changed(int32)), this, SLOT(onScaleChange()));
 
-	_curVersionText = lng_settings_current_version(lt_version, QString::fromWCharArray(AppVersionStr) + (DevChannel ? " dev" : "")) + ' ';
+	_curVersionText = lng_settings_current_version(lt_version, QString::fromWCharArray(AppVersionStr) + (cDevVersion() ? " dev" : "")) + ' ';
 	_curVersionWidth = st::linkFont->m.width(_curVersionText);
 	_newVersionText = lang(lng_settings_update_ready) + ' ';
 	_newVersionWidth = st::linkFont->m.width(_newVersionText);
@@ -312,7 +312,7 @@ SettingsInner::SettingsInner(SettingsWidget *parent) : QWidget(parent),
 
 void SettingsInner::peerUpdated(PeerData *data) {
 	if (self() && data == self()) {
-		if (self()->photoId) {
+		if (self()->photoId && self()->photoId != UnknownPeerPhotoId) {
 			PhotoData *selfPhoto = App::photo(self()->photoId);
 			if (selfPhoto->date) {
 				_photoLink = TextLinkPtr(new PhotoLink(selfPhoto, self()));
@@ -731,14 +731,14 @@ void SettingsInner::keyPressEvent(QKeyEvent *e) {
 	int32 size = _secretText.size(), from = 0;
 	while (size > from) {
 		QStringRef str(_secretText.midRef(from));
-		if (str == QLatin1String("debugmode")) {
+		if (str == qstr("debugmode")) {
 			QString text = cDebug() ? qsl("Do you want to disable DEBUG logs?") : qsl("Do you want to enable DEBUG logs?\n\nAll network events will be logged.");
 			ConfirmBox *box = new ConfirmBox(text);
 			connect(box, SIGNAL(confirmed()), App::app(), SLOT(onSwitchDebugMode()));
 			App::wnd()->showLayer(box);
 			from = size;
 			break;
-		} else if (str == QLatin1String("testmode")) {
+		} else if (str == qstr("testmode")) {
 			QString text = cTestMode() ? qsl("Do you want to disable TEST mode?") : qsl("Do you want to enable TEST mode?\n\nYou will be switched to test cloud.");
 			ConfirmBox *box = new ConfirmBox(text);
 			connect(box, SIGNAL(confirmed()), App::app(), SLOT(onSwitchTestMode()));
@@ -820,18 +820,19 @@ void SettingsInner::updateOnlineDisplay() {
 }
 
 void SettingsInner::updateConnectionType() {
+	QString connection;
 	switch (cConnectionType()) {
 	case dbictAuto: {
 		QString transport = MTP::dctransport();
-		if (transport.isEmpty()) {
-			_connectionType.setText(lang(lng_connection_auto_connecting));
-		} else {
-			_connectionType.setText(lng_connection_auto(lt_type, transport));
-		}
+		connection = transport.isEmpty() ? lang(lng_connection_auto_connecting) : lng_connection_auto(lt_transport, transport);
 	} break;
-	case dbictHttpProxy: _connectionType.setText(lang(lng_connection_http_proxy)); break;
-	case dbictTcpProxy: _connectionType.setText(lang(lng_connection_tcp_proxy)); break;
+	case dbictHttpProxy:
+	case dbictTcpProxy: {
+		QString transport = MTP::dctransport();
+		connection = transport.isEmpty() ? lang(lng_connection_proxy_connecting) : lng_connection_proxy(lt_transport, transport);
+	} break;
 	}
+	_connectionType.setText(connection);
 }
 
 void SettingsInner::passcodeChanged() {
@@ -850,7 +851,7 @@ void SettingsInner::gotFullSelf(const MTPUserFull &selfFull) {
 	if (!self()) return;
 	App::feedPhoto(selfFull.c_userFull().vprofile_photo);
 	App::feedUsers(MTP_vector<MTPUser>(1, selfFull.c_userFull().vuser));
-	PhotoData *selfPhoto = self()->photoId ? App::photo(self()->photoId) : 0;
+	PhotoData *selfPhoto = (self()->photoId && self()->photoId != UnknownPeerPhotoId) ? App::photo(self()->photoId) : 0;
 	if (selfPhoto && selfPhoto->date) {
 		_photoLink = TextLinkPtr(new PhotoLink(selfPhoto, self()));
 	} else {

@@ -489,6 +489,7 @@ void DialogsListWidget::leaveEvent(QEvent *e) {
 	if (sel || filteredSel >= 0 || hashtagSel >= 0 || searchedSel >= 0 || peopleSel >= 0) {
 		sel = 0;
 		filteredSel = searchedSel = peopleSel = hashtagSel = -1;
+		setCursor(style::cur_default);
 		parentWidget()->update();
 	}
 }
@@ -837,6 +838,7 @@ void DialogsListWidget::setMouseSel(bool msel, bool toTop) {
 			contactSel = !dialogs.list.count && contactsNoDialogs.list.count;
 		} else if (_state == FilteredState || _state == SearchedState) { // don't select first elem in search
 			filteredSel = peopleSel = searchedSel = hashtagSel = -1;
+			setCursor(style::cur_default);
 		}
 	}
 }
@@ -1094,7 +1096,7 @@ void DialogsListWidget::loadPeerPhotos(int32 yFrom) {
 
 bool DialogsListWidget::choosePeer() {
 	History *history = 0;
-	MsgId msgId = 0;
+	MsgId msgId = ShowAtUnreadMsgId;
 	if (_state == DefaultState) {
 		if (sel) history = sel->history;
 	} else if (_state == FilteredState || _state == SearchedState) {
@@ -1133,11 +1135,11 @@ bool DialogsListWidget::choosePeer() {
 		}
 	}
 	if (history) {
-		if (msgId) {
+		if (msgId > 0) {
 			saveRecentHashtags(filter);
 		}
 		bool chosen = (!App::main()->selectingPeer(true) && (_state == FilteredState || _state == SearchedState) && filteredSel >= 0 && filteredSel < filterResults.size());
-		App::main()->showPeer(history->peer->id, msgId);
+		App::main()->choosePeer(history->peer->id, msgId);
 		if (chosen) {
 			emit searchResultChosen();
 		}
@@ -1204,11 +1206,11 @@ void DialogsListWidget::peerBefore(const PeerData *inPeer, MsgId inMsg, PeerData
 			}
 			if (i.value()->prev) {
 				outPeer = i.value()->prev->history->peer;
-				outMsg = 0;
+				outMsg = ShowAtUnreadMsgId;
 				return;
 			} else if (dialogs.list.count) {
 				outPeer = dialogs.list.end->prev->history->peer;
-				outMsg = 0;
+				outMsg = ShowAtUnreadMsgId;
 				return;
 			}
 			outPeer = 0;
@@ -1217,7 +1219,7 @@ void DialogsListWidget::peerBefore(const PeerData *inPeer, MsgId inMsg, PeerData
 		}
 		if (i.value()->prev) {
 			outPeer = i.value()->prev->history->peer;
-			outMsg = 0;
+			outMsg = ShowAtUnreadMsgId;
 			return;
 		}
 	} else if (_state == FilteredState || _state == SearchedState) {
@@ -1231,7 +1233,7 @@ void DialogsListWidget::peerBefore(const PeerData *inPeer, MsgId inMsg, PeerData
 				}
 			}
 			if (searchResults.at(0)->_item->history()->peer == inPeer && searchResults.at(0)->_item->id == inMsg) {
-				outMsg = 0;
+				outMsg = ShowAtUnreadMsgId;
 				if (peopleResults.isEmpty()) {
 					if (filterResults.isEmpty()) {
 						outPeer = 0;
@@ -1246,14 +1248,14 @@ void DialogsListWidget::peerBefore(const PeerData *inPeer, MsgId inMsg, PeerData
 		}
 		if (!peopleResults.isEmpty() && peopleResults.at(0) == inPeer) {
 			outPeer = filterResults.isEmpty() ? 0 : filterResults.back()->history->peer;
-			outMsg = 0;
+			outMsg = ShowAtUnreadMsgId;
 			return;
 		}
 		if (!peopleResults.isEmpty()) {
 			for (PeopleResults::const_iterator b = peopleResults.cbegin(), i = b + 1, e = peopleResults.cend(); i != e; ++i) {
 				if ((*i) == inPeer) {
 					outPeer = (*(i - 1));
-					outMsg = 0;
+					outMsg = ShowAtUnreadMsgId;
 					return;
 				}
 			}
@@ -1267,7 +1269,7 @@ void DialogsListWidget::peerBefore(const PeerData *inPeer, MsgId inMsg, PeerData
 		for (FilteredDialogs::const_iterator b = filterResults.cbegin(), i = b + 1, e = filterResults.cend(); i != e; ++i) {
 			if ((*i)->history->peer == inPeer) {
 				outPeer = (*(i - 1))->history->peer;
-				outMsg = 0;
+				outMsg = ShowAtUnreadMsgId;
 				return;
 			}
 		}
@@ -1288,7 +1290,7 @@ void DialogsListWidget::peerAfter(const PeerData *inPeer, MsgId inMsg, PeerData 
 			}
 			if (i.value()->next != contactsNoDialogs.list.end) {
 				outPeer = i.value()->next->history->peer;
-				outMsg = 0;
+				outMsg = ShowAtUnreadMsgId;
 				return;
 			}
 			outPeer = 0;
@@ -1298,11 +1300,11 @@ void DialogsListWidget::peerAfter(const PeerData *inPeer, MsgId inMsg, PeerData 
 
 		if (i.value()->next != dialogs.list.end) {
 			outPeer = i.value()->next->history->peer;
-			outMsg = 0;
+			outMsg = ShowAtUnreadMsgId;
 			return;
 		} else if (contactsNoDialogs.list.count) {
 			outPeer = contactsNoDialogs.list.begin->history->peer;
-			outMsg = 0;
+			outMsg = ShowAtUnreadMsgId;
 			return;
 		}
 	} else if (_state == FilteredState || _state == SearchedState) {
@@ -1324,7 +1326,7 @@ void DialogsListWidget::peerAfter(const PeerData *inPeer, MsgId inMsg, PeerData 
 					outMsg = searchResults.front()->_item->id;
 				} else {
 					outPeer = (i == e) ? 0 : (*i);
-					outMsg = 0;
+					outMsg = ShowAtUnreadMsgId;
 				}
 				return;
 			}
@@ -1334,13 +1336,13 @@ void DialogsListWidget::peerAfter(const PeerData *inPeer, MsgId inMsg, PeerData 
 				++i;
 				if (i == e && !peopleResults.isEmpty()) {
 					outPeer = peopleResults.front();
-					outMsg = 0;
+					outMsg = ShowAtUnreadMsgId;
 				} else if (i == e && !searchResults.isEmpty()) {
 					outPeer = searchResults.front()->_item->history()->peer;
 					outMsg = searchResults.front()->_item->id;
 				} else {
 					outPeer = (i == e) ? 0 : (*i)->history->peer;
-					outMsg = 0;
+					outMsg = ShowAtUnreadMsgId;
 				}
 				return;
 			}
@@ -1410,6 +1412,9 @@ DialogsWidget::DialogsWidget(MainWidget *parent) : QWidget(parent)
 	connect(&_newGroup, SIGNAL(clicked()), this, SLOT(onNewGroup()));
 	connect(&_cancelSearch, SIGNAL(clicked()), this, SLOT(onCancelSearch()));
 
+	_chooseByDragTimer.setSingleShot(true);
+	connect(&_chooseByDragTimer, SIGNAL(timeout()), this, SLOT(onChooseByDrag()));
+
 	setAcceptDrops(true);
 
 	_searchTimer.setSingleShot(true);
@@ -1449,10 +1454,6 @@ void DialogsWidget::dialogsToUp() {
 	if (_filter.text().trimmed().isEmpty()) {
 		scroll.scrollToY(0);
 	}
-}
-
-void DialogsWidget::setInnerFocus() {
-	_filter.setFocus();
 }
 
 void DialogsWidget::animShow(const QPixmap &bgAnimCache) {
@@ -1628,6 +1629,10 @@ void DialogsWidget::onNeedSearchMessages() {
 	}
 }
 
+void DialogsWidget::onChooseByDrag() {
+	list.choosePeer();
+}
+
 void DialogsWidget::searchMessages(const QString &query) {
 	if (_filter.text() != query) {
 		_filter.setText(query);
@@ -1769,20 +1774,28 @@ void DialogsWidget::dragEnterEvent(QDragEnterEvent *e) {
 	if (App::main()->selectingPeer()) return;
 
 	_dragInScroll = false;
-	_dragForward = cWideMode() && e->mimeData()->hasFormat(qsl("application/x-td-forward-selected"));
+	_dragForward = e->mimeData()->hasFormat(qsl("application/x-td-forward-selected"));
+	if (!_dragForward) _dragForward = e->mimeData()->hasFormat(qsl("application/x-td-forward-pressed-link"));
+	if (!_dragForward) _dragForward = e->mimeData()->hasFormat(qsl("application/x-td-forward-pressed"));
+	if (_dragForward && !cWideMode()) _dragForward = false;
 	if (_dragForward) {
 		e->setDropAction(Qt::CopyAction);
 		e->accept();
 		updateDragInScroll(scroll.geometry().contains(e->pos()));
-	} else if (false && App::main() && App::main()->getDragState(e->mimeData()) != DragStateNone) {
+	} else if (App::main() && App::main()->getDragState(e->mimeData()) != DragStateNone) {
 		e->setDropAction(Qt::CopyAction);
 		e->accept();
 	}
+	_chooseByDragTimer.stop();
 }
 
 void DialogsWidget::dragMoveEvent(QDragMoveEvent *e) {
 	if (scroll.geometry().contains(e->pos())) {
-		if (_dragForward) updateDragInScroll(true);
+		if (_dragForward) {
+			updateDragInScroll(true);
+		} else {
+			_chooseByDragTimer.start(ChoosePeerByDragTimeout);
+		}
 		PeerData *p = list.updateFromParentDrag(mapToGlobal(e->pos()));
 		if (p) {
 			e->setDropAction(Qt::CopyAction);
@@ -1798,7 +1811,11 @@ void DialogsWidget::dragMoveEvent(QDragMoveEvent *e) {
 }
 
 void DialogsWidget::dragLeaveEvent(QDragLeaveEvent *e) {
-	if (_dragForward) updateDragInScroll(false);
+	if (_dragForward) {
+		updateDragInScroll(false);
+	} else {
+		_chooseByDragTimer.stop();
+	}
 	list.leaveEvent(0);
 	e->accept();
 }
@@ -1815,15 +1832,12 @@ void DialogsWidget::updateDragInScroll(bool inScroll) {
 }
 
 void DialogsWidget::dropEvent(QDropEvent *e) {
+	_chooseByDragTimer.stop();
 	if (scroll.geometry().contains(e->pos())) {
 		PeerData *p = list.updateFromParentDrag(mapToGlobal(e->pos()));
 		if (p) {
 			e->acceptProposedAction();
-			if (e->mimeData()->hasFormat(qsl("application/x-td-forward-selected"))) {
-				App::main()->onForward(p->id, true);
-			} else {
-				App::main()->showPeer(p->id, 0, false, true);
-			}
+			App::main()->onFilesOrForwardDrop(p->id, e->mimeData());
 		}
 	}
 }
@@ -1913,9 +1927,16 @@ void DialogsWidget::resizeEvent(QResizeEvent *e) {
 	_addContact.move(w - _addContact.width() - st::dlgPaddingHor, _filter.y());
 	_cancelSearch.move(w - _cancelSearch.width() - st::dlgPaddingHor, _filter.y());
 	scroll.move(0, _filter.height() + 2 * st::dlgFilterPadding);
+
+	int32 addToY = App::main() ? App::main()->contentScrollAddToY() : 0;
+	int32 newScrollY = scroll.scrollTop() + addToY;
 	scroll.resize(w, height() - _filter.y() - _filter.height() - st::dlgFilterPadding - st::dlgPaddingVer);
 	list.resize(w, list.height());
-	onListScroll();
+	if (addToY) {
+		scroll.scrollToY(newScrollY);
+	} else {
+		onListScroll();
+	}
 }
 
 void DialogsWidget::keyPressEvent(QKeyEvent *e) {

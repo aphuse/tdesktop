@@ -26,9 +26,9 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 "lng_menu_back" = "Indietro";
 
 "lng_open_from_tray" = "Apri Telegram";
-"lng_minimize_to_tray" = "Minimizza";
+"lng_minimize_to_tray" = "Riduci a icona";
 "lng_quit_from_tray" = "Chiudi Telegram";
-"lng_tray_icon_text" = "Telegram è ancora aperto qui,\npuoi cambiare questo nelle impostazioni.\n\nSe l'icona scompare dall'area di notifica,\npuoi riportarla indietro dalle icone nascoste.";
+"lng_tray_icon_text" = "Telegram è ancora attivo qui,\npuoi modificarlo nelle impostazioni.\nSe l'icona scompare dall'area di notifica,\npuoi ripristinarla dalle icone nascoste.";
 
 "lng_month1" = "Gennaio";
 "lng_month2" = "Febbraio";
@@ -166,11 +166,11 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 
 "lng_username_title" = "Cambia username";
 "lng_username_about" = "Puoi scegliere un username su Telegram.\nSe lo fai, le altre persone potranno trovarti\ntramite questo nome utente e contattarti \nsenza conoscere il tuo numero di telefono.\n\nPuoi usare a-z, 0-9 e underscore.\nLa lunghezza minima è di 5 caratteri.";
-"lng_username_invalid" = "Il nome non è valido.";
-"lng_username_occupied" = "Il nome è già occupato.";
-"lng_username_too_short" = "Il nome è troppo corto.";
-"lng_username_bad_symbols" = "Questo nome ha simboli errati.";
-"lng_username_available" = "Il nome è disponibile.";
+"lng_username_invalid" = "L'username non è valido.";
+"lng_username_occupied" = "L'username è già occupato.";
+"lng_username_too_short" = "L'username è troppo corto.";
+"lng_username_bad_symbols" = "Questo username ha simboli errati.";
+"lng_username_available" = "L'username è disponibile.";
 "lng_username_not_found" = "Utente @{user} non trovato.";
 
 "lng_settings_section_contact_info" = "Informazioni di contatto";
@@ -301,13 +301,14 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 
 "lng_connection_type" = "Tipo di connessione:";
 "lng_connection_auto_connecting" = "Default (connessione..)";
-"lng_connection_auto" = "Default ({type} in uso)";
-"lng_connection_http_proxy" = "HTTP con proxy";
-"lng_connection_tcp_proxy" = "TCP con proxy";
+"lng_connection_auto" = "Predefinito ({transport} in uso)";
+"lng_connection_proxy_connecting" = "Connessione tramite proxy..";
+"lng_connection_proxy" = "{transport} con proxy";
 "lng_connection_header" = "Tipo di connessione";
 "lng_connection_auto_rb" = "Auto (TCP se disponibile o HTTP)";
 "lng_connection_http_proxy_rb" = "HTTP con proxy-http personalizzato";
 "lng_connection_tcp_proxy_rb" = "TCP con proxy-socks5 personalizzato";
+"lng_connection_try_ipv6" = "Prova a connettere tramite IPv6";
 "lng_connection_host_ph" = "Hostname";
 "lng_connection_port_ph" = "Porta";
 "lng_connection_user_ph" = "Username";
@@ -367,6 +368,7 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 "lng_profile_files_header" = "Panoramica file";
 "lng_profile_audios" = "{count:_not_used_|# nota vocale|# note vocali} »";
 "lng_profile_audios_header" = "Panoramica note vocali";
+"lng_profile_audio_files_header" = "Playlist";
 "lng_profile_show_all_types" = "Mostra tutti i tipi";
 "lng_profile_copy_phone" = "Copia numero di telefono";
 
@@ -383,7 +385,8 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 
 "lng_sure_delete_and_exit" = "Sicuro di voler eliminare tutta la cronologia dei messaggi e abbandonare «{group}»?\n\nQuesta azione non può essere annullata.";
 
-"lng_message_empty" = "(vuoto)";
+"lng_message_empty" = "Messaggio vuoto";
+"lng_media_unsupported" = "Media non supportato";
 
 "lng_action_add_user" = "{from} ha aggiunto {user}";
 "lng_action_kick_user" = "{from} ha rimosso {user}";
@@ -475,6 +478,22 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 "lng_user_typing" = "{user} sta scrivendo";
 "lng_users_typing" = "{user} e {second_user} stanno scrivendo";
 "lng_many_typing" = "{count:_not_used_|# sta|# stanno} scrivendo";
+"lng_send_action_record_video" = "registrando un video";
+"lng_user_action_record_video" = "{user} sta registrando un video";
+"lng_send_action_upload_video" = "inviando un video";
+"lng_user_action_upload_video" = "{user} sta inviando un video";
+"lng_send_action_record_audio" = "registrando un audio";
+"lng_user_action_record_audio" = "{user} sta registrando un audio";
+"lng_send_action_upload_audio" = "inviando un audio";
+"lng_user_action_upload_audio" = "{user} sta inviando un audio";
+"lng_send_action_upload_photo" = "inviando una foto";
+"lng_user_action_upload_photo" = "{user} sta inviando una foto";
+"lng_send_action_upload_file" = "inviando un file";
+"lng_user_action_upload_file" = "{user} sta inviando un file";
+"lng_send_action_geo_location" = "selezionando una posizione";
+"lng_user_action_geo_location" = "{user} sta selezionando una posizione";
+"lng_send_action_choose_contact" = "selezionando un contatto";
+"lng_user_action_choose_contact" = "{user} sta selezionando un contatto";
 "lng_unread_bar" = "{count:_not_used_|# messaggio non letto|# messaggi non letti}";
 
 "lng_maps_point" = "Posizione";
@@ -601,7 +620,7 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 
 "lng_new_version_wrap" = "Telegram Desktop si è aggiornato alla versione {version}\n\n{changes}\n\nLa cronologia degli update è disponibile qui:\n{link}";
 "lng_new_version_minor" = "— Bug fix e altri miglioramenti minori";
-"lng_new_version_text" = "Questa nuova versione include il support per i bot usando la nuova API per i bot. Se sei un ingegnere, crea i tuoi bot per giochi, servizi o integrazioni. Scopri di più su {blog_link}";
+"lng_new_version_text" = "— Riproduzione dei media migliorata\n— Risoluzione di bug e miglioramenti minori";
 
 "lng_menu_insert_unicode" = "Inserisci carattere di controllo Unicode";
 

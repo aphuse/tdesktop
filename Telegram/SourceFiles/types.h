@@ -199,6 +199,7 @@ private:
 };
 
 #define qsl(s) QStringLiteral(s)
+#define qstr(s) QLatin1String(s, sizeof(s) - 1)
 
 static const QRegularExpression::PatternOptions reMultiline(QRegularExpression::DotMatchesEverythingOption | QRegularExpression::MultilineOption);
 
@@ -247,7 +248,7 @@ enum DataBlockId {
 	dbiLastUpdateCheck     = 0x0d,
 	dbiWindowPosition      = 0x0e,
 	dbiConnectionType      = 0x0f,
-// 16 reserved
+// 0x10 reserved
 	dbiDefaultAttach       = 0x11,
 	dbiCatsAndDogs         = 0x12,
 	dbiReplaceEmojis       = 0x13,
@@ -258,7 +259,7 @@ enum DataBlockId {
 	dbiRecentEmojisOld     = 0x18,
 	dbiLoggedPhoneNumber   = 0x19,
 	dbiMutedPeers          = 0x1a,
-// 27 reserved
+// 0x1b reserved
 	dbiNotifyView          = 0x1c,
 	dbiSendToMenu          = 0x1d,
 	dbiCompressPastedImage = 0x1e,
@@ -271,6 +272,8 @@ enum DataBlockId {
 	dbiEmojiVariants       = 0x25,
 	dbiRecentStickers      = 0x26,
 	dbiDcOption            = 0x27,
+	dbiTryIPv6             = 0x28,
+	dbiSongVolume          = 0x29,
 
 	dbiEncryptedWithSalt   = 333,
 	dbiEncrypted           = 444,

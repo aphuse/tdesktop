@@ -82,6 +82,7 @@ public:
 	void updateBotInfo(bool recount = true);
 
 	bool wasSelectedText() const;
+	void setFirstLoading(bool loading);
 
 	~HistoryList();
 	
@@ -106,6 +107,7 @@ public slots:
 	void onMenuDestroy(QObject *obj);
 	void onTouchSelect();
 	void onTouchScrollTimer();
+	void onDragExec();
 
 private:
 
@@ -129,6 +131,8 @@ private:
 	ScrollArea *scrollArea;
 	int32 currentBlock, currentItem;
 
+	bool _firstLoading;
+
 	QTimer linkTipTimer;
 
 	Qt::CursorShape _cursor;
@@ -148,6 +152,7 @@ private:
 	TextSelectType _dragSelType;
 	QPoint _dragStartPos, _dragPos;
 	HistoryItem *_dragItem;
+	HistoryCursorState _dragCursorState;
 	uint16 _dragSymbol;
 	bool _dragWasInactive;
 
@@ -341,6 +346,7 @@ public:
 	void start();
 
 	void messagesReceived(const MTPmessages_Messages &messages, mtpRequestId requestId);
+	void historyLoaded();
 
 	void windowShown();
 	bool isActive() const;
@@ -367,7 +373,8 @@ public:
 
 	void loadMessages();
 	void loadMessagesDown();
-	void loadMessagesAround();
+	void firstLoadMessages();
+	void delayedShowAt(MsgId showAtMsgId);
 	void peerMessagesUpdated(PeerId peer);
 	void peerMessagesUpdated();
 
@@ -379,10 +386,12 @@ public:
 
 	QRect historyRect() const;
 
-	void updateTyping(bool typing = true);
+	void updateSendAction(History *history, SendActionType type, int32 progress = 0);
+	void cancelSendAction(History *history, SendActionType type);
+
 	void updateRecentStickers();
 	void stickersInstalled(uint64 setId);
-	void typingDone(const MTPBool &result, mtpRequestId req);
+	void sendActionDone(const MTPBool &result, mtpRequestId req);
 
 	void destroyData();
 	void uploadImage(const QImage &img, bool withText = false, const QString &source = QString());
@@ -395,7 +404,6 @@ public:
 	void confirmSendImage(const ReadyLocalMedia &img);
 	void cancelSendImage();
 
-	void checkUnreadLoaded(bool checkOnlyShow = false);
 	void updateControlsVisibility();
 	void updateOnlineDisplay(int32 x, int32 w);
 	void updateOnlineDisplayTimer();
@@ -406,14 +414,12 @@ public:
 	void shareContact(const PeerId &peer, const QString &phone, const QString &fname, const QString &lname, MsgId replyTo, int32 userId = 0);
 
 	PeerData *peer() const;
-	PeerData *activePeer() const;
-	MsgId activeMsgId() const;
-	int32 lastWidth() const;
-	int32 lastScrollTop() const;
+	MsgId msgId() const;
 
 	void animShow(const QPixmap &bgAnimCache, const QPixmap &bgAnimTopBarCache, bool back = false);
 	bool showStep(float64 ms);
 	void animStop();
+	void doneShow();
 
 	QPoint clampMousePosition(QPoint point);
 
@@ -424,7 +430,7 @@ public:
     
 	QString prepareMessage(QString text);
 
-	uint64 animActiveTime() const;
+	uint64 animActiveTime(MsgId id) const;
 	void stopAnimActive();
 
 	void fillSelectedItems(SelectedItemSet &sel, bool forDelete = true);
@@ -467,6 +473,11 @@ public:
 
 	DragState getDragState(const QMimeData *d);
 
+	void fastShowAtEnd(History *h);
+	void showPeerHistory(const PeerId &peer, MsgId showAtMsgId);
+	void clearDelayedShowAt();
+	void clearAllLoadRequests();
+
 	~HistoryWidget();
 
 signals:
@@ -480,6 +491,8 @@ public slots:
 	void onReplyToMessage();
 	void onReplyForwardPreviewCancel();
 
+	void onCancelSendAction();
+
 	void onStickerPackInfo();
 
 	void onPreviewParse();
@@ -489,16 +502,16 @@ public slots:
 	void peerUpdated(PeerData *data);
 	void onFullPeerUpdated(PeerData *data);
 
-	void cancelTyping();
-
 	void onPhotoUploaded(MsgId msgId, const MTPInputFile &file);
 	void onDocumentUploaded(MsgId msgId, const MTPInputFile &file);
 	void onThumbDocumentUploaded(MsgId msgId, const MTPInputFile &file, const MTPInputFile &thumb);
 	void onAudioUploaded(MsgId msgId, const MTPInputFile &file);
 
+	void onPhotoProgress(MsgId msgId);
 	void onDocumentProgress(MsgId msgId);
 	void onAudioProgress(MsgId msgId);
 
+	void onPhotoFailed(MsgId msgId);
 	void onDocumentFailed(MsgId msgId);
 	void onAudioFailed(MsgId msgId);
 
@@ -509,8 +522,9 @@ public slots:
 
 	void onPhotoSelect();
 	void onDocumentSelect();
-	void onPhotoDrop(QDropEvent *e);
-	void onDocumentDrop(QDropEvent *e);
+	void onPhotoDrop(const QMimeData *data);
+	void onDocumentDrop(const QMimeData *data);
+	void onFilesDrop(const QMimeData *data);
 
 	void onKbToggle(bool manual = true);
 	void onCmdStart();
@@ -519,12 +533,12 @@ public slots:
 	void onSendConfirmed();
 	void onSendCancelled();
 	void onPhotoFailed(quint64 id);
-	void showPeer(const PeerId &peer, MsgId msgId = 0, bool force = false, bool leaveActive = false);
-	void clearLoadingAround();
+
 	void activate();
 	void onMentionHashtagOrBotCommandInsert(QString str);
 	void onTextChange();
 
+	void onFieldTabbed();
 	void onStickerSend(DocumentData *sticker);
 
 	void onVisibleChanged();
@@ -550,6 +564,7 @@ public slots:
 	void onDraftSave(bool delayed = false);
 
 	void updateStickers();
+	void botCommandsChanged(UserData *user);
 
 	void onRecordError();
 	void onRecordDone(QByteArray result, qint32 samples);
@@ -589,6 +604,8 @@ private:
 	void addMessagesToFront(const QVector<MTPMessage> &messages);
 	void addMessagesToBack(const QVector<MTPMessage> &messages);
 
+	void countHistoryShowFrom();
+
 	void updateToEndVisibility();
 
 	void stickersGot(const MTPmessages_AllStickers &stickers);
@@ -603,21 +620,20 @@ private:
 
 	void updateDragAreas();
 
-	bool _loadingMessages;
-	int32 histRequestsCount;
-	PeerData *histPeer;
-	History *_activeHist;
-	MTPinputPeer histInputPeer;
-	mtpRequestId histPreloading, histPreloadingDown;
-	QVector<MTPMessage> histPreload, histPreloadDown;
+	PeerData *_peer;
+	MsgId _showAtMsgId;
 
-	int32 _loadingAroundId;
-	mtpRequestId _loadingAroundRequest;
+	mtpRequestId _firstLoadRequest, _preloadRequest, _preloadDownRequest;
+
+	MsgId _delayedShowAtMsgId;
+	mtpRequestId _delayedShowAtRequest;
+
+	MsgId _activeAnimMsgId;
 
 	ScrollArea _scroll;
 	HistoryList *_list;
-	History *hist;
-	bool _histInited, _histNeedUpdate; // initial updateListSize() called
+	History *_history;
+	bool _histInited; // initial updateListSize() called
 
 	IconedButton _toHistoryEnd;
 
@@ -650,19 +666,17 @@ private:
 
 	int32 _selCount; // < 0 - text selected, focus list, not _field
 
-	LocalImageLoader imageLoader;
+	LocalImageLoader _imageLoader;
 	bool _synthedTextUpdate;
 
-	int64 serviceImageCacheSize;
-	QImage confirmImage;
-	PhotoId confirmImageId;
-	bool confirmWithText;
-	QString confirmSource;
+	int64 _serviceImageCacheSize;
+	QImage _confirmImage;
+	PhotoId _confirmImageId;
+	bool _confirmWithText;
+	QString _confirmSource;
 
-	QString titlePeerText;
-	int32 titlePeerTextWidth;
-
-	bool hiderOffered;
+	QString _titlePeerText;
+	int32 _titlePeerTextWidth;
 
 	Animation _showAnim;
 	QPixmap _animCache, _bgAnimCache, _animTopBarCache, _bgAnimTopBarCache;
@@ -675,8 +689,8 @@ private:
 	QTimer _animActiveTimer;
 	float64 _animActiveStart;
 
-	mtpRequestId _typingRequest;
-	QTimer _typingStopTimer;
+	QMap<QPair<History*, SendActionType>, mtpRequestId> _sendActionRequests;
+	QTimer _sendActionStopTimer;
 
 	uint64 _saveDraftStart;
 	bool _saveDraftText;

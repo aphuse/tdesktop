@@ -28,7 +28,7 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 "lng_open_from_tray" = "Abrir Telegram";
 "lng_minimize_to_tray" = "Minimizar";
 "lng_quit_from_tray" = "Sair do Telegram";
-"lng_tray_icon_text" = "Telegram ainda está sendo executado,\nvocê pode mudar isso nas configurações.\n\nSe este ícone desaparecer de sua bandeja,\nvocê pode arrastar de volta dos ícones ocultos.";
+"lng_tray_icon_text" = "Telegram ainda está sendo executado,\nvocê pode mudar isso nas configurações.\nSe este ícone desaparecer de sua bandeja,\nvocê pode arrastar de volta dos ícones ";
 
 "lng_month1" = "Janeiro";
 "lng_month2" = "Fevereiro";
@@ -166,11 +166,11 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 
 "lng_username_title" = "Alterar nome de usuário";
 "lng_username_about" = "Você pode escolher um nome de usuário no Telegram.\nAssim, outras pessoas poderão te encontrar\npelo nome de usuário e entrar em contato\nsem precisar saber seu telefone.\n\nVocê pode usar a-z, 0-9 e underline.\nO tamanho mínimo é 5 caracteres.";
-"lng_username_invalid" = "Esse nome é inválido.";
-"lng_username_occupied" = "Esse nome já está ocupado.";
-"lng_username_too_short" = "Esse nome é muito curto.";
-"lng_username_bad_symbols" = "Esse nome contém símbolos incompatíveis.";
-"lng_username_available" = "Esse nome está disponível.";
+"lng_username_invalid" = "Nome de usuário inválido.";
+"lng_username_occupied" = "Nome de usuário ocupado.";
+"lng_username_too_short" = "Nome de usuário muito curto.";
+"lng_username_bad_symbols" = "Nome de usuário com símbolos incompatíveis.";
+"lng_username_available" = "Nome de usuário disponível.";
 "lng_username_not_found" = "Usuário @{user} não encontrado.";
 
 "lng_settings_section_contact_info" = "Informação de contato";
@@ -301,13 +301,14 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 
 "lng_connection_type" = "Tipo de conexão:";
 "lng_connection_auto_connecting" = "Padrão (conectando..)";
-"lng_connection_auto" = "Padrão ({type} usado)";
-"lng_connection_http_proxy" = "HTTP com proxy";
-"lng_connection_tcp_proxy" = "TCP com proxy";
+"lng_connection_auto" = "Padrão ({transport} usado)";
+"lng_connection_proxy_connecting" = "Conectando via proxy...";
+"lng_connection_proxy" = "{transport} com proxy";
 "lng_connection_header" = "Tipo de conexão";
 "lng_connection_auto_rb" = "Auto (TCP se disponível ou HTTP)";
 "lng_connection_http_proxy_rb" = "HTTP com http-proxy customizado";
 "lng_connection_tcp_proxy_rb" = "TCP com socks5-proxy customizado";
+"lng_connection_try_ipv6" = "Tentando conexão via IPv6";
 "lng_connection_host_ph" = "Nome do host";
 "lng_connection_port_ph" = "Porta";
 "lng_connection_user_ph" = "Nome de usuário";
@@ -360,13 +361,14 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 "lng_profile_shared_media" = "Mídia compartilhada";
 "lng_profile_no_media" = "Nenhuma mídia nessa conversa.";
 "lng_profile_photos" = "{count:_not_used_|# foto|# fotos} »";
-"lng_profile_photos_header" = "Visualização de fotos";
+"lng_profile_photos_header" = "Fotos";
 "lng_profile_videos" = "{count:_not_used_|# arquivo de vídeo|# arquivo de vídeos} »";
-"lng_profile_videos_header" = "Visualização de vídeos";
+"lng_profile_videos_header" = "Vídeos";
 "lng_profile_files" = "{count:_not_used_|# arquivo|# arquivos} »";
-"lng_profile_files_header" = "Visualização de arquivos";
+"lng_profile_files_header" = "Arquivos";
 "lng_profile_audios" = "{count:_not_used_|# mensagem de voz|# mensagens de voz} »";
-"lng_profile_audios_header" = "Visualização de mensagens de voz";
+"lng_profile_audios_header" = "Mensagens de voz";
+"lng_profile_audio_files_header" = "Reprodução";
 "lng_profile_show_all_types" = "Mostrar todos os tipos";
 "lng_profile_copy_phone" = "Copiar número de telefone";
 
@@ -383,7 +385,8 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 
 "lng_sure_delete_and_exit" = "Você tem certeza que deseja apagar todo o seu histórico de mensagens e deixar «{group}»?\n\nEssa ação não pode ser desfeita.";
 
-"lng_message_empty" = "(vazio)";
+"lng_message_empty" = "Mensagem Vazia";
+"lng_media_unsupported" = "Mídia Não-Suportada";
 
 "lng_action_add_user" = "{from} adicionou {user}";
 "lng_action_kick_user" = "{from} removeu {user}";
@@ -475,6 +478,22 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 "lng_user_typing" = "{user} está escrevendo";
 "lng_users_typing" = "{user} e {second_user} estão escrevendo";
 "lng_many_typing" = "{count:_not_used_|# está|# estão} escrevendo";
+"lng_send_action_record_video" = "gravando vídeo";
+"lng_user_action_record_video" = "{user} está gravando vídeo";
+"lng_send_action_upload_video" = "enviando vídeo";
+"lng_user_action_upload_video" = "{user} está enviando vídeo";
+"lng_send_action_record_audio" = "gravando áudio";
+"lng_user_action_record_audio" = "{user} está gravando áudio";
+"lng_send_action_upload_audio" = "enviando áudio";
+"lng_user_action_upload_audio" = "{user} está gravando áudio";
+"lng_send_action_upload_photo" = "enviando foto";
+"lng_user_action_upload_photo" = "{user} está enviando foto";
+"lng_send_action_upload_file" = "enviando arquivo";
+"lng_user_action_upload_file" = "{user} está enviando arquivo";
+"lng_send_action_geo_location" = "escolhendo local";
+"lng_user_action_geo_location" = "{user} está escolhendo local";
+"lng_send_action_choose_contact" = "escolhendo contato";
+"lng_user_action_choose_contact" = "{user} está escolhendo contato";
 "lng_unread_bar" = "{count:_not_used_|# mensagem não lida|# mensagens não lidas}";
 
 "lng_maps_point" = "Localização";
@@ -601,7 +620,7 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 
 "lng_new_version_wrap" = "Telegram Desktop foi atualizado para a versão {version}\n\n{changes}\n\nHistórico completo de mudanças disponível aqui:\n{link}";
 "lng_new_version_minor" = "— Resolução de bugs e outras menores melhorias";
-"lng_new_version_text" = "Essa nova versão inclui suporte para bots usando a nova API de bots. Se você for um engenheiro, crie seus próprios bots para jogos, serviços ou integrações.\n\nLeia mais em {blog_link}";
+"lng_new_version_text" = "— Reprodução de mídia no app melhorada\n— Resolução de bugs e menores melhorias";
 
 "lng_menu_insert_unicode" = "Inserir caractere de controle Unicode";
 

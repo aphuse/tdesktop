@@ -193,8 +193,6 @@ public:
 	void animShow(const QPixmap &bgAnimCache);
 	bool animStep(float64 ms);
 
-	void setInnerFocus();
-
 	void destroyData();
 
 	void peerBefore(const PeerData *inPeer, MsgId inMsg, PeerData *&outPeer, MsgId &outMsg) const;
@@ -236,11 +234,14 @@ public slots:
 	bool onSearchMessages(bool searchCache = false);
 	void onNeedSearchMessages();
 
+	void onChooseByDrag();
+
 private:
 
 	bool _drawShadow;
 
 	bool _dragInScroll, _dragForward;
+	QTimer _chooseByDragTimer;
 
 	void unreadCountsReceived(const QVector<MTPDialog> &dialogs);
 	bool dialogsFailed(const RPCError &error);

@@ -301,13 +301,14 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 
 "lng_connection_type" = "连接方式：";
 "lng_connection_auto_connecting" = "默认（连接..）";
-"lng_connection_auto" = "默认 ({type} used)";
-"lng_connection_http_proxy" = "启用代理的 HTTP 连接";
-"lng_connection_tcp_proxy" = "启用代理的 TCP 连接";
+"lng_connection_auto" = "默认 ({transport} used)";
+"lng_connection_proxy_connecting" = "通过代理连接..";
+"lng_connection_proxy" = "{transport} 代理";
 "lng_connection_header" = "连接类型";
 "lng_connection_auto_rb" = "自动 (TCP if available or HTTP)";
 "lng_connection_http_proxy_rb" = "HTTP with custom http-proxy";
 "lng_connection_tcp_proxy_rb" = "TCP with custom socks5-proxy";
+"lng_connection_try_ipv6" = "尝试通过 IPv6 连接";
 "lng_connection_host_ph" = "主机名";
 "lng_connection_port_ph" = "端口";
 "lng_connection_user_ph" = "用户名";
@@ -367,6 +368,7 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 "lng_profile_files_header" = "文件概览";
 "lng_profile_audios" = "{count:_not_used_|# 条语音信息|# 条语音信息} »";
 "lng_profile_audios_header" = "语音信息概览";
+"lng_profile_audio_files_header" = "播放列表";
 "lng_profile_show_all_types" = "显示所有类型";
 "lng_profile_copy_phone" = "复制手机号";
 
@@ -383,7 +385,8 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 
 "lng_sure_delete_and_exit" = "确定退出 «{group}» 并删除所有相关历史记录？\n\n此操作不可恢复";
 
-"lng_message_empty" = "（空）";
+"lng_message_empty" = "空消息";
+"lng_media_unsupported" = "不支持的媒体";
 
 "lng_action_add_user" = "{from} 将 {user} 加入群组";
 "lng_action_kick_user" = "{from} 将 {user} 移出群组";
@@ -475,6 +478,22 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 "lng_user_typing" = "{user} 正在输入";
 "lng_users_typing" = "{user} 和 {second_user} 正在输入";
 "lng_many_typing" = "{count:_not_used_|# 正在|# 正在}输入";
+"lng_send_action_record_video" = "录制视频中";
+"lng_user_action_record_video" = "{user} 正在录制视频";
+"lng_send_action_upload_video" = "发送视频";
+"lng_user_action_upload_video" = "{user} 正在发送视频";
+"lng_send_action_record_audio" = "录制音频中";
+"lng_user_action_record_audio" = "{user} 正在录制音频";
+"lng_send_action_upload_audio" = "发送音频";
+"lng_user_action_upload_audio" = "{user} 正在发送音频";
+"lng_send_action_upload_photo" = "上传照片中";
+"lng_user_action_upload_photo" = "{user} 正在上传照片";
+"lng_send_action_upload_file" = "发送文件中";
+"lng_user_action_upload_file" = "{user} 正在发送文件";
+"lng_send_action_geo_location" = "定位中";
+"lng_user_action_geo_location" = "{user} 正在定位";
+"lng_send_action_choose_contact" = "选择联系人中";
+"lng_user_action_choose_contact" = "{user} 正在选择联系人";
 "lng_unread_bar" = "{count:_not_used_|# 未读消息|# 未读消息}";
 
 "lng_maps_point" = "地点";
@@ -601,7 +620,7 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 
 "lng_new_version_wrap" = "Telegram Desktop 已更新到版本 {version}\n\n{changes}\n\n完整的更新日志：\n{link}";
 "lng_new_version_minor" = "- 错误修复和其他小的改进";
-"lng_new_version_text" = "这个新版本为聊天机器人了添加新的API，对每个人都是开放的。如果你是个设计师，你可以创建用于游戏或者服务的机器人。在 {blog_link} 查看更多信息。";
+"lng_new_version_text" = "- 改进应用内置的媒体播放器\n- 错误修复和其他小的改进";
 
 "lng_menu_insert_unicode" = "插入Unicode控制字符";
 

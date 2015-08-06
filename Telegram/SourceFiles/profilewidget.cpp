@@ -76,15 +76,22 @@ ProfileInner::ProfileInner(ProfileWidget *profile, ScrollArea *scroll, const Pee
 	connect(App::api(), SIGNAL(fullPeerUpdated(PeerData*)), this, SLOT(onFullPeerUpdated(PeerData*)));
 
 	if (_peerUser) {
-		_phoneText = _peerUser->phone.isEmpty() ? QString() : App::formatPhone(_peerUser->phone);
-		App::api()->requestFullPeer(_peer);
-	} else if (_peerChat->photoId) {
-		PhotoData *ph = App::photo(_peerChat->photoId);
-		if (ph->date) {
-			_photoLink = TextLinkPtr(new PhotoLink(ph, _peer));
+		_phoneText = App::formatPhone(_peerUser->phone);
+		PhotoData *userPhoto = (_peerUser->photoId && _peerUser->photoId != UnknownPeerPhotoId) ? App::photo(_peerUser->photoId) : 0;
+		if (userPhoto && userPhoto->date) {
+			_photoLink = TextLinkPtr(new PhotoLink(userPhoto, _peer));
+		}
+		if ((_peerUser->botInfo && !_peerUser->botInfo->inited) || (_peerUser->photoId == UnknownPeerPhotoId) || (_peerUser->photoId && !userPhoto->date)) {
+			App::api()->requestFullPeer(_peer);
 		}
 	} else {
-		App::api()->requestFullPeer(_peer);
+		PhotoData *chatPhoto = (_peerChat->photoId && _peerChat->photoId != UnknownPeerPhotoId) ? App::photo(_peerChat->photoId) : 0;
+		if (chatPhoto && chatPhoto->date) {
+			_photoLink = TextLinkPtr(new PhotoLink(chatPhoto, _peer));
+		}
+		if (_peerChat->photoId == UnknownPeerPhotoId) {
+			App::api()->requestFullPeer(_peer);
+		}
 	}
 
 	// profile
@@ -171,7 +178,7 @@ void ProfileInner::onInviteToGroup() {
 }
 
 void ProfileInner::onSendMessage() {
-	App::main()->showPeer(_peer->id);
+	App::main()->showPeerHistory(_peer->id, ShowAtUnreadMsgId);
 }
 
 void ProfileInner::onEnableNotifications() {
@@ -243,7 +250,7 @@ void ProfileInner::onClearHistory() {
 }
 
 void ProfileInner::onClearHistorySure() {
-	App::main()->showPeer(0, 0, true);
+	App::main()->showDialogs();
 	App::wnd()->hideLayer();
 	App::main()->clearHistory(_peer);
 }
@@ -325,7 +332,7 @@ void ProfileInner::chatInviteDone(const MTPExportedChatInvite &result) {
 void ProfileInner::onFullPeerUpdated(PeerData *peer) {
 	if (peer != _peer) return;
 	if (_peerUser) {
-		PhotoData *userPhoto = _peerUser->photoId ? App::photo(_peerUser->photoId) : 0;
+		PhotoData *userPhoto = (_peerUser->photoId && _peerUser->photoId != UnknownPeerPhotoId) ? App::photo(_peerUser->photoId) : 0;
 		if (userPhoto && userPhoto->date) {
 			_photoLink = TextLinkPtr(new PhotoLink(userPhoto, _peer));
 		} else {
@@ -351,7 +358,7 @@ void ProfileInner::onBotSettings() {
 	for (int32 i = 0, l = _peerUser->botInfo->commands.size(); i != l; ++i) {
 		QString cmd = _peerUser->botInfo->commands.at(i).command;
 		if (!cmd.compare(qsl("settings"), Qt::CaseInsensitive)) {
-			App::main()->showPeer(_peer->id);
+			App::main()->showPeerHistory(_peer->id, ShowAtTheEndMsgId);
 			App::main()->sendBotCommand('/' + cmd, 0);
 			return;
 		}
@@ -363,7 +370,7 @@ void ProfileInner::onBotHelp() {
 	for (int32 i = 0, l = _peerUser->botInfo->commands.size(); i != l; ++i) {
 		QString cmd = _peerUser->botInfo->commands.at(i).command;
 		if (!cmd.compare(qsl("help"), Qt::CaseInsensitive)) {
-			App::main()->showPeer(_peer->id);
+			App::main()->showPeerHistory(_peer->id, ShowAtTheEndMsgId);
 			App::main()->sendBotCommand('/' + cmd, 0);
 			return;
 		}
@@ -375,10 +382,10 @@ void ProfileInner::peerUpdated(PeerData *data) {
 	if (data == _peer) {
 		PhotoData *photo = 0;
 		if (_peerUser) {
-			_phoneText = _peerUser->phone.isEmpty() ? QString() : App::formatPhone(_peerUser->phone);
-			if (_peerUser->photoId) photo = App::photo(_peerUser->photoId);
+			_phoneText = App::formatPhone(_peerUser->phone);
+			if (_peerUser->photoId && _peerUser->photoId != UnknownPeerPhotoId) photo = App::photo(_peerUser->photoId);
 		} else {
-			if (_peerChat->photoId) photo = App::photo(_peerChat->photoId);
+			if (_peerChat->photoId && _peerChat->photoId != UnknownPeerPhotoId) photo = App::photo(_peerChat->photoId);
 		}
 		_photoLink = (photo && photo->date) ? TextLinkPtr(new PhotoLink(photo, _peer)) : TextLinkPtr();
 		if (_peer->name != _nameCache) {
@@ -572,6 +579,8 @@ void ProfileInner::paintEvent(QPaintEvent *e) {
 	p.setPen(st::black->p);
 	int oneState = 0; // < 0 - loading, 0 - no media, > 0 - link shown
 	for (int i = 0; i < OverviewCount; ++i) {
+		if (i == OverviewAudioDocuments) continue;
+
 		int32 count = (_hist->_overviewCount[i] > 0) ? _hist->_overviewCount[i] : (_hist->_overviewCount[i] == 0 ? _hist->_overview[i].size() : -1);
 		if (count < 0) {
 			if (!oneState) oneState = count;
@@ -757,7 +766,7 @@ void ProfileInner::mouseReleaseEvent(QMouseEvent *e) {
 		textlnkDown(TextLinkPtr());
 		if (lnk == textlnkOver()) {
 			if (reBotCommand().match(lnk->encoded()).hasMatch()) {
-				App::main()->showPeer(_peer->id);
+				App::main()->showPeerHistory(_peer->id, ShowAtTheEndMsgId);
 			}
 			lnk->onClick(e->button());
 		}
@@ -852,6 +861,8 @@ void ProfileInner::resizeEvent(QResizeEvent *e) {
 	_mediaShowAll.move(_left + _width - _mediaShowAll.width(), top);
 	int wasCount = 0; // < 0 - loading, 0 - no media, > 0 - link shown
 	for (int i = 0; i < OverviewCount; ++i) {
+		if (i == OverviewAudioDocuments) continue;
+
 		if (_allMediaTypes) {
 			int32 count = (_hist->_overviewCount[i] > 0) ? _hist->_overviewCount[i] : (_hist->_overviewCount[i] == 0 ? _hist->_overview[i].size() : -1);
 			if (count > 0) {
@@ -950,7 +961,7 @@ void ProfileInner::updateNotifySettings() {
 	_enableNotifications.setChecked(_peer->notify == EmptyNotifySettings || _peer->notify == UnknownNotifySettings || _peer->notify->mute < unixtime());
 }
 
-void ProfileInner::mediaOverviewUpdated(PeerData *peer) {
+void ProfileInner::mediaOverviewUpdated(PeerData *peer, MediaOverviewType type) {
 	if (peer == _peer) {
 		resizeEvent(0);
 		showAll();
@@ -1022,6 +1033,8 @@ void ProfileInner::showAll() {
 	// shared media
 	bool first = false, wasCount = false, manyCounts = false;
 	for (int i = 0; i < OverviewCount; ++i) {
+		if (i == OverviewAudioDocuments) continue;
+
 		int32 count = (_hist->_overviewCount[i] > 0) ? _hist->_overviewCount[i] : (_hist->_overviewCount[i] == 0 ? _hist->_overview[i].size() : -1);
 		if (count > 0) {
 			if (wasCount) {
@@ -1076,9 +1089,9 @@ void ProfileInner::updateInvitationLink() {
 	} else {
 		_createInvitationLink.setText(lang(lng_group_invite_create_new));
 		_invitationText = _peerChat->invitationUrl;
-		if (_invitationText.startsWith(QLatin1String("http://"), Qt::CaseInsensitive)) {
+		if (_invitationText.startsWith(qstr("http://"), Qt::CaseInsensitive)) {
 			_invitationText = _invitationText.mid(7);
-		} else if (_invitationText.startsWith(QLatin1String("https://"), Qt::CaseInsensitive)) {
+		} else if (_invitationText.startsWith(qstr("https://"), Qt::CaseInsensitive)) {
 			_invitationText = _invitationText.mid(8);
 		}
 	}
@@ -1129,8 +1142,13 @@ void ProfileWidget::onScroll() {
 }
 
 void ProfileWidget::resizeEvent(QResizeEvent *e) {
+	int32 addToY = App::main() ? App::main()->contentScrollAddToY() : 0;
+	int32 newScrollY = _scroll.scrollTop() + addToY;
 	_scroll.resize(size());
 	_inner.resize(width(), _inner.height());
+	if (addToY) {
+		_scroll.scrollToY(newScrollY);
+	}
 }
 
 void ProfileWidget::mousePressEvent(QMouseEvent *e) {
@@ -1166,6 +1184,13 @@ void ProfileWidget::paintTopBar(QPainter &p, float64 over, int32 decreaseWidth) 
 		p.setFont(st::topBarBackFont->f);
 		p.setPen(st::topBarBackColor->p);
 		p.drawText(st::topBarBackPadding.left() + st::topBarBackImg.pxWidth() + st::topBarBackPadding.right(), (st::topBarHeight - st::topBarBackFont->height) / 2 + st::topBarBackFont->ascent, lang(peer()->chat ? lng_profile_group_info : lng_profile_info));
+	}
+}
+
+void ProfileWidget::topBarShadowParams(int32 &x, float64 &o) {
+	if (animating() && a_coord.current() >= 0) {
+		x = a_coord.current();
+		o = a_alpha.current();
 	}
 }
 
@@ -1246,8 +1271,8 @@ void ProfileWidget::updateNotifySettings() {
 	_inner.updateNotifySettings();
 }
 
-void ProfileWidget::mediaOverviewUpdated(PeerData *peer) {
-	_inner.mediaOverviewUpdated(peer);
+void ProfileWidget::mediaOverviewUpdated(PeerData *peer, MediaOverviewType type) {
+	_inner.mediaOverviewUpdated(peer, type);
 }
 
 void ProfileWidget::clear() {

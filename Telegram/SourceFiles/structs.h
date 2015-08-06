@@ -25,6 +25,9 @@ typedef uint64 DocumentId;
 typedef uint64 WebPageId;
 typedef int32 MsgId;
 
+static const MsgId ShowAtTheEndMsgId = -0x40000000;
+static const MsgId ShowAtUnreadMsgId = 0;
+
 struct NotifySettings {
 	NotifySettings() : mute(0), sound("default"), previews(true), events(1) {
 	}
@@ -106,6 +109,8 @@ struct PeerData {
 static const uint64 UserNoAccess = 0xFFFFFFFFFFFFFFFFULL;
 
 class PeerLink : public ITextLink {
+	TEXT_LINK_CLASS(PeerLink)
+
 public:
 	PeerLink(PeerData *peer) : _peer(peer) {
 	}
@@ -118,11 +123,35 @@ private:
 	PeerData *_peer;
 };
 
-struct BotCommand {
-	BotCommand(const QString &command, const QString &description) : command(command), description(description) {
+class BotCommand {
+public:
+	BotCommand(const QString &command, const QString &description) : command(command), _description(description) {
+		
 	}
-	QString command, description;
+	QString command;
+
+	bool setDescription(const QString &description) {
+		if (_description != description) {
+			_description = description;
+			_descriptionText = Text();
+			return true;
+		}
+		return false;
+	}
+
+	const Text &descriptionText() const {
+		if (_descriptionText.isEmpty() && !_description.isEmpty()) {
+			_descriptionText.setText(st::mentionFont, _description, _textNameOptions);
+		}
+		return _descriptionText;
+	}
+
+private:
+	QString _description;
+	mutable Text _descriptionText;
+
 };
+
 struct BotInfo {
 	BotInfo() : inited(false), readsAllHistory(false), cantJoinGroups(false), version(0), text(st::msgMinWidth) {
 	}
@@ -136,9 +165,11 @@ struct BotInfo {
 	QString startToken, startGroupToken;
 };
 
+static const PhotoId UnknownPeerPhotoId = 0xFFFFFFFFFFFFFFFFULL;
+
 struct PhotoData;
 struct UserData : public PeerData {
-	UserData(const PeerId &id) : PeerData(id), photoId(0), lnk(new PeerLink(this)), onlineTill(0), contact(-1), photosCount(-1), botInfo(0) {
+	UserData(const PeerId &id) : PeerData(id), photoId(UnknownPeerPhotoId), lnk(new PeerLink(this)), onlineTill(0), contact(-1), photosCount(-1), botInfo(0) {
 	}
 	void setPhoto(const MTPUserProfilePhoto &photo);
 	void setName(const QString &first, const QString &last, const QString &phoneName, const QString &username);
@@ -167,9 +198,9 @@ struct UserData : public PeerData {
 };
 
 struct ChatData : public PeerData {
-	ChatData(const PeerId &id) : PeerData(id), count(0), date(0), version(0), left(false), forbidden(true), botStatus(0), photoId(0) {
+	ChatData(const PeerId &id) : PeerData(id), count(0), date(0), version(0), left(false), forbidden(true), botStatus(0), photoId(UnknownPeerPhotoId) {
 	}
-	void setPhoto(const MTPChatPhoto &photo, const PhotoId &phId = 0);
+	void setPhoto(const MTPChatPhoto &photo, const PhotoId &phId = UnknownPeerPhotoId);
 	int32 count;
 	int32 date;
 	int32 version;
@@ -234,6 +265,8 @@ struct PhotoData {
 };
 
 class PhotoLink : public ITextLink {
+	TEXT_LINK_CLASS(PhotoLink)
+
 public:
 	PhotoLink(PhotoData *photo) : _photo(photo), _peer(0) {
 	}
@@ -313,6 +346,8 @@ struct VideoData {
 };
 
 class VideoLink : public ITextLink {
+	TEXT_LINK_CLASS(VideoLink)
+
 public:
 	VideoLink(VideoData *video) : _video(video) {
 	}
@@ -325,6 +360,8 @@ private:
 };
 
 class VideoSaveLink : public VideoLink {
+	TEXT_LINK_CLASS(VideoSaveLink)
+
 public:
 	VideoSaveLink(VideoData *video) : VideoLink(video) {
 	}
@@ -333,6 +370,8 @@ public:
 };
 
 class VideoOpenLink : public VideoLink {
+	TEXT_LINK_CLASS(VideoOpenLink)
+
 public:
 	VideoOpenLink(VideoData *video) : VideoLink(video) {
 	}
@@ -340,6 +379,8 @@ public:
 };
 
 class VideoCancelLink : public VideoLink {
+	TEXT_LINK_CLASS(VideoCancelLink)
+
 public:
 	VideoCancelLink(VideoData *video) : VideoLink(video) {
 	}
@@ -399,7 +440,30 @@ struct AudioData {
 	int32 md5[8];
 };
 
+struct AudioMsgId {
+	AudioMsgId() : audio(0), msgId(0) {
+	}
+	AudioMsgId(AudioData *audio, MsgId msgId) : audio(audio), msgId(msgId) {
+	}
+	operator bool() const {
+		return audio;
+	}
+	AudioData *audio;
+	MsgId msgId;
+};
+inline bool operator<(const AudioMsgId &a, const AudioMsgId &b) {
+	return quintptr(a.audio) < quintptr(b.audio) || (quintptr(a.audio) == quintptr(b.audio) && a.msgId < b.msgId);
+}
+inline bool operator==(const AudioMsgId &a, const AudioMsgId &b) {
+	return a.audio == b.audio && a.msgId == b.msgId;
+}
+inline bool operator!=(const AudioMsgId &a, const AudioMsgId &b) {
+	return !(a == b);
+}
+
 class AudioLink : public ITextLink {
+	TEXT_LINK_CLASS(AudioLink)
+
 public:
 	AudioLink(AudioData *audio) : _audio(audio) {
 	}
@@ -412,6 +476,8 @@ private:
 };
 
 class AudioSaveLink : public AudioLink {
+	TEXT_LINK_CLASS(AudioSaveLink)
+
 public:
 	AudioSaveLink(AudioData *audio) : AudioLink(audio) {
 	}
@@ -420,6 +486,8 @@ public:
 };
 
 class AudioOpenLink : public AudioLink {
+	TEXT_LINK_CLASS(AudioOpenLink)
+
 public:
 	AudioOpenLink(AudioData *audio) : AudioLink(audio) {
 	}
@@ -427,13 +495,26 @@ public:
 };
 
 class AudioCancelLink : public AudioLink {
+	TEXT_LINK_CLASS(AudioCancelLink)
+
 public:
 	AudioCancelLink(AudioData *audio) : AudioLink(audio) {
 	}
 	void onClick(Qt::MouseButton button) const;
 };
 
-struct StickerData {
+enum DocumentType {
+	FileDocument     = 0,
+	VideoDocument    = 1,
+	SongDocument     = 2,
+	StickerDocument  = 3,
+	AnimatedDocument = 4,
+};
+
+struct DocumentAdditionalData {
+};
+
+struct StickerData : public DocumentAdditionalData {
 	StickerData() : set(MTP_inputStickerSetEmpty()) {
 	}
 	ImagePtr img;
@@ -445,20 +526,20 @@ struct StickerData {
 	StorageImageLocation loc; // doc thumb location
 };
 
-enum DocumentType {
-	FileDocument,
-	VideoDocument,
-	AudioDocument,
-	StickerDocument,
-	AnimatedDocument
+struct SongData : public DocumentAdditionalData {
+	SongData() : duration(0) {
+	}
+	int32 duration;
+	QString title, performer;
 };
+
 struct DocumentData {
 	DocumentData(const DocumentId &id, const uint64 &access = 0, int32 date = 0, const QVector<MTPDocumentAttribute> &attributes = QVector<MTPDocumentAttribute>(), const QString &mime = QString(), const ImagePtr &thumb = ImagePtr(), int32 dc = 0, int32 size = 0);
 	void setattributes(const QVector<MTPDocumentAttribute> &attributes);
 
 	void forget() {
 		thumb->forget();
-		if (sticker) sticker->img->forget();
+		if (sticker()) sticker()->img->forget();
 		replyPreview->forget();
 	}
 
@@ -488,15 +569,20 @@ struct DocumentData {
 		loader = 0;
 	}
 	~DocumentData() {
-		delete sticker;
+		delete _additional;
 	}
 
 	QString already(bool check = false);
+	StickerData *sticker() {
+		return (type == StickerDocument) ? static_cast<StickerData*>(_additional) : 0;
+	}
+	SongData *song() {
+		return (type == SongDocument) ? static_cast<SongData*>(_additional) : 0;
+	}
 
 	DocumentId id;
 	DocumentType type;
 	QSize dimensions;
-	int32 duration;
 	uint64 access;
 	int32 date;
 	QString name, mime;
@@ -512,12 +598,35 @@ struct DocumentData {
 	FileLocation location;
 
 	QByteArray data;
-	StickerData *sticker;
+	DocumentAdditionalData *_additional;
 
 	int32 md5[8];
 };
 
+struct SongMsgId {
+	SongMsgId() : song(0), msgId(0) {
+	}
+	SongMsgId(DocumentData *song, MsgId msgId) : song(song), msgId(msgId) {
+	}
+	operator bool() const {
+		return song;
+	}
+	DocumentData *song;
+	MsgId msgId;
+};
+inline bool operator<(const SongMsgId &a, const SongMsgId &b) {
+	return quintptr(a.song) < quintptr(b.song) || (quintptr(a.song) == quintptr(b.song) && a.msgId < b.msgId);
+}
+inline bool operator==(const SongMsgId &a, const SongMsgId &b) {
+	return a.song == b.song && a.msgId == b.msgId;
+}
+inline bool operator!=(const SongMsgId &a, const SongMsgId &b) {
+	return !(a == b);
+}
+
 class DocumentLink : public ITextLink {
+	TEXT_LINK_CLASS(DocumentLink)
+
 public:
 	DocumentLink(DocumentData *document) : _document(document) {
 	}
@@ -530,6 +639,8 @@ private:
 };
 
 class DocumentSaveLink : public DocumentLink {
+	TEXT_LINK_CLASS(DocumentSaveLink)
+
 public:
 	DocumentSaveLink(DocumentData *document) : DocumentLink(document) {
 	}
@@ -538,13 +649,18 @@ public:
 };
 
 class DocumentOpenLink : public DocumentLink {
+	TEXT_LINK_CLASS(DocumentOpenLink)
+
 public:
 	DocumentOpenLink(DocumentData *document) : DocumentLink(document) {
 	}
+	static void doOpen(DocumentData *document);
 	void onClick(Qt::MouseButton button) const;
 };
 
 class DocumentCancelLink : public DocumentLink {
+	TEXT_LINK_CLASS(DocumentCancelLink)
+
 public:
 	DocumentCancelLink(DocumentData *document) : DocumentLink(document) {
 	}
@@ -558,14 +674,14 @@ enum WebPageType {
 	WebPageArticle
 };
 inline WebPageType toWebPageType(const QString &type) {
-	if (type == QLatin1String("photo")) return WebPagePhoto;
-	if (type == QLatin1String("video")) return WebPageVideo;
-	if (type == QLatin1String("profile")) return WebPageProfile;
+	if (type == qstr("photo")) return WebPagePhoto;
+	if (type == qstr("video")) return WebPageVideo;
+	if (type == qstr("profile")) return WebPageProfile;
 	return WebPageArticle;
 }
 
 struct WebPageData {
-	WebPageData(const WebPageId &id, WebPageType type = WebPageArticle, const QString &url = QString(), const QString &displayUrl = QString(), const QString &siteName = QString(), const QString &title = QString(), const QString &description = QString(), PhotoData *photo = 0, int32 duration = 0, const QString &author = QString(), int32 pendingTill = 0);
+	WebPageData(const WebPageId &id, WebPageType type = WebPageArticle, const QString &url = QString(), const QString &displayUrl = QString(), const QString &siteName = QString(), const QString &title = QString(), const QString &description = QString(), PhotoData *photo = 0, int32 duration = 0, const QString &author = QString(), int32 pendingTill = -1);
 	
 	void forget() {
 		if (photo) photo->forget();

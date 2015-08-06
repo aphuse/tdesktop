@@ -28,7 +28,7 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 "lng_open_from_tray" = "Open Telegram";
 "lng_minimize_to_tray" = "Minimize to tray";
 "lng_quit_from_tray" = "Quit Telegram";
-"lng_tray_icon_text" = "Telegram is still running here,\nyou can change this from settings page.\n\nIf this icon disappears from tray menu,\nyou can drag it back here from hidden icons.";
+"lng_tray_icon_text" = "Telegram is still running here,\nyou can change this from settings page.\nIf this icon disappears from tray menu,\nyou can drag it here from hidden icons.";
 
 "lng_month1" = "January";
 "lng_month2" = "February";
@@ -166,11 +166,11 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 
 "lng_username_title" = "Change username";
 "lng_username_about" = "You can choose a username on Telegram.\nIf you do, other people will be able to find\nyou by this username and contact you\nwithout knowing your phone number.\n\nYou can use a-z, 0-9 and underscores.\nMinimum length is 5 characters.";
-"lng_username_invalid" = "This name is invalid.";
-"lng_username_occupied" = "This name is already occupied.";
-"lng_username_too_short" = "This name is too short.";
-"lng_username_bad_symbols" = "This name has bad symbols.";
-"lng_username_available" = "This name is available.";
+"lng_username_invalid" = "This username is invalid.";
+"lng_username_occupied" = "This username is already occupied.";
+"lng_username_too_short" = "This username is too short.";
+"lng_username_bad_symbols" = "This username has bad symbols.";
+"lng_username_available" = "This username is available.";
 "lng_username_not_found" = "User @{user} not found.";
 
 "lng_settings_section_contact_info" = "Contact info";
@@ -301,13 +301,14 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 
 "lng_connection_type" = "Connection type:";
 "lng_connection_auto_connecting" = "Default (connecting..)";
-"lng_connection_auto" = "Default ({type} used)";
-"lng_connection_http_proxy" = "HTTP with proxy";
-"lng_connection_tcp_proxy" = "TCP with proxy";
+"lng_connection_auto" = "Default ({transport} used)";
+"lng_connection_proxy_connecting" = "Connecting through proxy..";
+"lng_connection_proxy" = "{transport} with proxy";
 "lng_connection_header" = "Connection type";
 "lng_connection_auto_rb" = "Auto (TCP if available or HTTP)";
 "lng_connection_http_proxy_rb" = "HTTP with custom http-proxy";
 "lng_connection_tcp_proxy_rb" = "TCP with custom socks5-proxy";
+"lng_connection_try_ipv6" = "Try connecting through IPv6";
 "lng_connection_host_ph" = "Hostname";
 "lng_connection_port_ph" = "Port";
 "lng_connection_user_ph" = "Username";
@@ -367,6 +368,7 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 "lng_profile_files_header" = "Files overview";
 "lng_profile_audios" = "{count:_not_used_|# voice message|# voice messages} »";
 "lng_profile_audios_header" = "Voice messages overview";
+"lng_profile_audio_files_header" = "Playlist";
 "lng_profile_show_all_types" = "Show all types";
 "lng_profile_copy_phone" = "Copy phone number";
 
@@ -383,7 +385,8 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 
 "lng_sure_delete_and_exit" = "Are you sure, you want to delete all message history and leave «{group}»?\n\nThis action cannot be undone.";
 
-"lng_message_empty" = "(empty)";
+"lng_message_empty" = "Empty Message";
+"lng_media_unsupported" = "Media Unsupported";
 
 "lng_action_add_user" = "{from} added {user}";
 "lng_action_kick_user" = "{from} kicked {user}";
@@ -475,6 +478,22 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 "lng_user_typing" = "{user} is typing";
 "lng_users_typing" = "{user} and {second_user} are typing";
 "lng_many_typing" = "{count:_not_used_|# is|# are} typing";
+"lng_send_action_record_video" = "recording video";
+"lng_user_action_record_video" = "{user} is recording video";
+"lng_send_action_upload_video" = "sending video";
+"lng_user_action_upload_video" = "{user} is sending video";
+"lng_send_action_record_audio" = "recording audio";
+"lng_user_action_record_audio" = "{user} is recording audio";
+"lng_send_action_upload_audio" = "sending audio";
+"lng_user_action_upload_audio" = "{user} is sending audio";
+"lng_send_action_upload_photo" = "sending photo";
+"lng_user_action_upload_photo" = "{user} is sending photo";
+"lng_send_action_upload_file" = "sending file";
+"lng_user_action_upload_file" = "{user} is sending file";
+"lng_send_action_geo_location" = "picking location";
+"lng_user_action_geo_location" = "{user} is picking location";
+"lng_send_action_choose_contact" = "choosing contact";
+"lng_user_action_choose_contact" = "{user} is choosing contact";
 "lng_unread_bar" = "{count:_not_used_|# unread message|# unread messages}";
 
 "lng_maps_point" = "Location";
@@ -601,7 +620,7 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 
 "lng_new_version_wrap" = "Telegram Desktop was updated to version {version}\n\n{changes}\n\nFull version history is available here:\n{link}";
 "lng_new_version_minor" = "— Bug fixes and other minor improvements";
-"lng_new_version_text" = "This new version includes support for bots using the new bot API, free for everyone. If you're an engineer, create your own bots for games, services or integrations.\n\nLearn more at {blog_link}";
+"lng_new_version_text" = "— Improved in-app media playback\n— Bug fixes and other minor improvements";
 
 "lng_menu_insert_unicode" = "Insert Unicode control character";
 
