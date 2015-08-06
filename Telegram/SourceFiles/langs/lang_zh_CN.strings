@@ -385,7 +385,8 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 
 "lng_sure_delete_and_exit" = "确定退出 «{group}» 并删除所有相关历史记录？\n\n此操作不可恢复";
 
-"lng_message_empty" = "（空）";
+"lng_message_empty" = "空消息";
+"lng_media_unsupported" = "不支持的媒体";
 
 "lng_action_add_user" = "{from} 将 {user} 加入群组";
 "lng_action_kick_user" = "{from} 将 {user} 移出群组";
@@ -477,6 +478,22 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 "lng_user_typing" = "{user} 正在输入";
 "lng_users_typing" = "{user} 和 {second_user} 正在输入";
 "lng_many_typing" = "{count:_not_used_|# 正在|# 正在}输入";
+"lng_send_action_record_video" = "录制视频中";
+"lng_user_action_record_video" = "{user} 正在录制视频";
+"lng_send_action_upload_video" = "发送视频";
+"lng_user_action_upload_video" = "{user} 正在发送视频";
+"lng_send_action_record_audio" = "录制音频中";
+"lng_user_action_record_audio" = "{user} 正在录制音频";
+"lng_send_action_upload_audio" = "发送音频";
+"lng_user_action_upload_audio" = "{user} 正在发送音频";
+"lng_send_action_upload_photo" = "上传照片中";
+"lng_user_action_upload_photo" = "{user} 正在上传照片";
+"lng_send_action_upload_file" = "发送文件中";
+"lng_user_action_upload_file" = "{user} 正在发送文件";
+"lng_send_action_geo_location" = "定位中";
+"lng_user_action_geo_location" = "{user} 正在定位";
+"lng_send_action_choose_contact" = "选择联系人中";
+"lng_user_action_choose_contact" = "{user} 正在选择联系人";
 "lng_unread_bar" = "{count:_not_used_|# 未读消息|# 未读消息}";
 
 "lng_maps_point" = "地点";
