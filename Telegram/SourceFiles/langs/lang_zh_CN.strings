@@ -156,8 +156,11 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 "lng_dlg_new_group_name" = "群组名称";
 "lng_dlg_create_group" = "创建";
 "lng_no_contacts" = "没有联系人";
+"lng_no_chats" = "会话将会出现在此处";
 "lng_contacts_loading" = "载入中..";
 "lng_contacts_not_found" = "没有找到联系人";
+"lng_dlg_search_chat" = "在此会话中搜索";
+"lng_dlg_search_for_messages" = "搜索消息";
 
 "lng_settings_save" = "保存";
 "lng_settings_upload" = "设置头像";
@@ -339,6 +342,7 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 "lng_topbar_info" = "信息";
 "lng_profile_about_section" = "关于";
 "lng_profile_settings_section" = "设置";
+"lng_profile_actions_section" = "动作";
 "lng_profile_bot_settings" = "设置";
 "lng_profile_bot_help" = "帮助";
 "lng_profile_participants_section" = "成员";
@@ -348,6 +352,9 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 "lng_profile_edit_contact" = "编辑";
 "lng_profile_enable_notifications" = "通知";
 "lng_profile_clear_history" = "清除历史记录";
+"lng_profile_delete_conversation" = "删除会话";
+"lng_profile_clear_and_exit" = "删除并退出";
+"lng_profile_search_messages" = "搜索消息";
 "lng_profile_send_message" = "发送消息";
 "lng_profile_share_contact" = "分享联系人";
 "lng_profile_invite_to_group" = "添加到群组";
@@ -379,9 +386,11 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 "lng_create_group_title" = "新群组";
 
 "lng_failed_add_participant" = "无法添加用户。请稍后再试。";
+"lng_failed_add_not_mutual" = "如果用户离开了群组,\n 只有他的联系人才能将他邀请回来\n(they need to have your phone\nnumber, and you need theirs).";
 
 "lng_sure_delete_contact" = "确定从联系人列表删除 {contact}？";
-"lng_sure_delete_history" = "确定删除 {contact} 相关的所有历史记录？\n\n此操作不可恢复";
+"lng_sure_delete_history" = "确定删除 {contact} 相关的所有历史记录？\n\n此操作不可撤销";
+"lng_sure_delete_group_history" = "确定删除 «{group}» 的所有历史记录?\n\n此操作不可撤消";
 
 "lng_sure_delete_and_exit" = "确定退出 «{group}» 并删除所有相关历史记录？\n\n此操作不可恢复";
 
@@ -462,7 +471,7 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 "lng_message_ph" = "写一个消息..";
 "lng_record_cancel" = "在此区域外释放取消录音";
 "lng_empty_history" = "";
-"lng_willbe_history" = "Please select chat to start messaging";
+"lng_willbe_history" = "Please select a chat to start messaging";
 "lng_message_with_from" = "[c]{from}:[/c] {message}";
 "lng_from_you" = "你";
 "lng_bot_description" = "这个机器人能做什么?";
@@ -620,7 +629,7 @@ Copyright (c) 2014 John Preston, https://desktop.telegram.org
 
 "lng_new_version_wrap" = "Telegram Desktop 已更新到版本 {version}\n\n{changes}\n\n完整的更新日志：\n{link}";
 "lng_new_version_minor" = "- 错误修复和其他小的改进";
-"lng_new_version_text" = "- 改进应用内置的媒体播放器\n- 错误修复和其他小的改进";
+"lng_new_version_text" = "- 会话内消息搜索\n- 群组历史记录删除\n- 在会话列表中隐藏没有消息的联系人";
 
 "lng_menu_insert_unicode" = "插入Unicode控制字符";
 
